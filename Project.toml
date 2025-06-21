@@ -1,6 +1,6 @@
 name = "SegyIO"
 uuid = "157a0f19-4d44-4de5-a0d0-07e2f0ac4dfa"
-authors = ["Henryk Modzelewski <henryk_modzelewski@mac.com>"]
+authors = ["Henryk Modzelewski <henryk_modzelewski@mac.com>", "Mathias Louboutin <mathias@devitocodes.com>"]
 version = "0.8.5"
 
 [deps]
