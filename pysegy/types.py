@@ -167,6 +167,7 @@ TH_INT32_FIELDS = {
 FH_FIELDS = list(FH_BYTE2SAMPLE.keys())
 TH_FIELDS = list(TH_BYTE2SAMPLE.keys())
 
+
 @dataclass
 class BinaryFileHeader:
     """Container for parsed binary file header values."""
@@ -188,12 +189,14 @@ class BinaryFileHeader:
         fields = ", ".join(f"{k}={self.values[k]}" for k in FH_FIELDS)
         return f"BinaryFileHeader({fields})"
 
+
 @dataclass
 class FileHeader:
     """Combined textual and binary file header."""
 
     th: bytes = b" " * 3200
     bfh: BinaryFileHeader = field(default_factory=BinaryFileHeader)
+
 
 @dataclass
 class BinaryTraceHeader:
@@ -215,6 +218,7 @@ class BinaryTraceHeader:
     def __repr__(self):
         fields = " ".join(f"{k}={self.values[k]}" for k in TH_FIELDS[:5])
         return f"BinaryTraceHeader({fields} ...)"
+
 
 @dataclass
 class SeisBlock:

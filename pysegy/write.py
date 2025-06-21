@@ -34,7 +34,9 @@ def write_fileheader(f: BinaryIO, fh: FileHeader, bigendian: bool = True) -> Non
         f.write(b"\x00" * pad)
 
 
-def write_traceheader(f: BinaryIO, th: BinaryTraceHeader, bigendian: bool = True) -> None:
+def write_traceheader(
+    f: BinaryIO, th: BinaryTraceHeader, bigendian: bool = True
+) -> None:
     """Write a single trace header to ``f``."""
     buf = bytearray(240)
     for key in TH_BYTE2SAMPLE:
@@ -53,7 +55,6 @@ def write_block(f: BinaryIO, block: SeisBlock, bigendian: bool = True) -> None:
     write_fileheader(f, block.fileheader, bigendian)
     ns = block.fileheader.bfh.ns
     dsf = block.fileheader.bfh.DataSampleFormat
-    ntraces = len(block.traceheaders)
     for i, hdr in enumerate(block.traceheaders):
         trace = [block.data[j][i] for j in range(ns)]
         write_traceheader(f, hdr, bigendian)

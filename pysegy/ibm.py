@@ -1,9 +1,5 @@
 """Conversion helpers between IBM and IEEE floating point formats."""
 
-import struct
-
-# Conversion between 32-bit IBM float and IEEE float
-
 from typing import Union
 
 
@@ -23,6 +19,7 @@ def ibm_to_ieee(value: Union[bytes, bytearray, int]) -> float:
     # IBM exponent is base 16 biased by 64
     mant = fraction / float(0x01000000)
     return sign * mant * 16 ** (exponent - 64)
+
 
 def ieee_to_ibm(f: float) -> bytes:
     """Convert Python ``float`` to an IBM 32-bit float encoded as bytes."""
