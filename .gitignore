@@ -1,3 +1,9 @@
 *.jl.cov
 *.jl.*.cov
 *.jl.mem
+__pycache__/
+python/__pycache__/
+python/tests/__pycache__/
+.coverage
+coverage.xml
+htmlcov/
