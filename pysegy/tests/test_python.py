@@ -70,3 +70,23 @@ def test_write_read_block_bytesio():
     bio.seek(0)
     out = seg.read.read_file(bio)
     assert out.data == data
+
+import urllib.request
+import gzip
+import shutil
+import pytest
+
+BP_URL = "http://s3.amazonaws.com/open.source.geoscience/open_data/bpmodel94/Model94_shots.segy.gz"
+
+@pytest.mark.xfail(reason="Dataset requires network access")
+def test_bp_model_headers(tmp_path):
+    gz_path = tmp_path / "Model94_shots.segy.gz"
+    segy_path = tmp_path / "Model94_shots.segy"
+    urllib.request.urlretrieve(BP_URL, gz_path)
+    with gzip.open(gz_path, "rb") as f_in, open(segy_path, "wb") as f_out:
+        shutil.copyfileobj(f_in, f_out)
+    block = seg.segy_read(str(segy_path))
+    assert block.fileheader.bfh.dt > 0
+    assert block.fileheader.bfh.ns > 0
+    assert len(block.traceheaders) > 0
+
