@@ -7,6 +7,9 @@ import pysegy as seg
 from pysegy.ibm import ibm_to_ieee, ieee_to_ibm
 from pysegy.types import BinaryFileHeader, FileHeader, BinaryTraceHeader, SeisBlock
 from io import BytesIO
+import urllib.request
+import gzip
+import pytest
 
 DATAFILE = os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'overthrust_2D_shot_1_20.segy')
 
@@ -71,22 +74,21 @@ def test_write_read_block_bytesio():
     out = seg.read.read_file(bio)
     assert out.data == data
 
-import urllib.request
-import gzip
-import shutil
-import pytest
-
 BP_URL = "http://s3.amazonaws.com/open.source.geoscience/open_data/bpmodel94/Model94_shots.segy.gz"
 
-@pytest.mark.xfail(reason="Dataset requires network access")
-def test_bp_model_headers(tmp_path):
-    gz_path = tmp_path / "Model94_shots.segy.gz"
-    segy_path = tmp_path / "Model94_shots.segy"
-    urllib.request.urlretrieve(BP_URL, gz_path)
-    with gzip.open(gz_path, "rb") as f_in, open(segy_path, "wb") as f_out:
-        shutil.copyfileobj(f_in, f_out)
-    block = seg.segy_read(str(segy_path))
-    assert block.fileheader.bfh.dt > 0
-    assert block.fileheader.bfh.ns > 0
-    assert len(block.traceheaders) > 0
+def test_bp_model_headers():
+    """Download a portion of the BP model data and verify header values."""
+    response = urllib.request.urlopen(BP_URL)
+    with gzip.GzipFile(fileobj=response) as gz:
+        data = gz.read(40000)
+    fh = seg.read.read_fileheader(BytesIO(data))
+    assert fh.bfh.dt == 4000
+    assert fh.bfh.ns == 2000
+    assert fh.bfh.DataSampleFormat == 1
+    bio = BytesIO(data)
+    bio.seek(3600)
+    th = seg.read.read_traceheader(bio)
+    assert th.ns == 2000
+    assert th.SourceX == 0
+    assert th.GroupX == 15
 
