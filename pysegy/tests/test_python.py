@@ -94,7 +94,12 @@ def test_bp_model_headers():
 
 
 def test_bp_model_scan(tmp_path):
-    """Download and scan the full BP model dataset."""
+    """Download the full BP Model dataset and verify shot statistics.
+
+    The dataset contains 278 distinct shot locations. Receiver counts vary
+    between 240 and 480 per shot. This test ensures the reader can process the
+    entire file and that these counts match the known reference values.
+    """
     dest = tmp_path / "Model94_shots.segy"
     response = urllib.request.urlopen(BP_URL)
     with gzip.GzipFile(fileobj=response) as gz, open(dest, "wb") as f:
