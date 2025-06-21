@@ -53,7 +53,7 @@ def read_traceheader(
         fmt = ">i" if size == 4 else ">h"
         if not bigendian:
             fmt = "<i" if size == 4 else "<h"
-        val = struct.unpack(fmt, hdr_bytes[offset : offset + size])[0]
+        val = struct.unpack(fmt, hdr_bytes[offset:offset + size])[0]
         setattr(th, k, val)
     return th
 
@@ -74,7 +74,7 @@ def read_traces(
         headers[i] = hdr
         raw = f.read(ns * 4)
         if datatype == 1:  # IBM float
-            traces = [ibm_to_ieee(raw[j : j + 4]) for j in range(0, ns * 4, 4)]
+            traces = [ibm_to_ieee(raw[j:j + 4]) for j in range(0, ns * 4, 4)]
             for j, v in enumerate(traces):
                 data[j][i] = v
         else:

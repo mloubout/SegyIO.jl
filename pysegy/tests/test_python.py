@@ -1,17 +1,20 @@
 import os
 import sys
-
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
-
-import pysegy as seg
-from pysegy.ibm import ibm_to_ieee, ieee_to_ibm
-from pysegy.types import BinaryFileHeader, FileHeader, BinaryTraceHeader, SeisBlock
 from io import BytesIO
-import urllib.request
 import gzip
-import pytest
+import urllib.request
 
-DATAFILE = os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'overthrust_2D_shot_1_20.segy')
+sys.path.insert(
+    0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+)  # noqa: E402
+
+import pysegy as seg  # noqa: E402
+from pysegy.ibm import ibm_to_ieee  # noqa: E402
+from pysegy.types import FileHeader, BinaryTraceHeader, SeisBlock  # noqa: E402
+
+DATAFILE = os.path.join(
+    os.path.dirname(__file__), '..', '..', 'data', 'overthrust_2D_shot_1_20.segy'
+)
 
 
 def test_read():
@@ -74,7 +77,12 @@ def test_write_read_block_bytesio():
     out = seg.read.read_file(bio)
     assert out.data == data
 
-BP_URL = "http://s3.amazonaws.com/open.source.geoscience/open_data/bpmodel94/Model94_shots.segy.gz"
+
+BP_URL = (
+    "http://s3.amazonaws.com/open.source.geoscience/"
+    "open_data/bpmodel94/Model94_shots.segy.gz"
+)
+
 
 def test_bp_model_headers():
     """Download a portion of the BP model data and verify header values."""
@@ -126,4 +134,3 @@ def test_bp_model_scan(tmp_path):
     assert len(counts) == 278
     assert min(counts.values()) == 240
     assert max(counts.values()) == 480
-
