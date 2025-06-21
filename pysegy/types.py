@@ -223,3 +223,19 @@ class SeisBlock:
     fileheader: FileHeader
     traceheaders: List[BinaryTraceHeader]
     data: List[List[float]]
+
+@dataclass
+class BlockScan:
+    """Summary information for a contiguous block of traces."""
+    file: str
+    startbyte: int
+    endbyte: int
+    summary: Dict[str, List[int]]
+
+
+@dataclass
+class SeisCon:
+    """Container for the results of scanning a SEGY file."""
+    ns: int
+    dsf: int
+    blocks: List[BlockScan]

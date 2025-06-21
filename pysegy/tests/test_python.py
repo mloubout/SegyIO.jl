@@ -92,3 +92,20 @@ def test_bp_model_headers():
     assert th.SourceX == 0
     assert th.GroupX == 15
 
+
+def test_scan_local():
+    con = seg.scan_file(open(DATAFILE, "rb"), ["SourceX"], 1000)
+    assert con.ns == 751
+    assert len(con.blocks) == 4
+    assert "SourceX" in con.blocks[0].summary
+
+
+def test_bp_scan():
+    response = urllib.request.urlopen(BP_URL)
+    with gzip.GzipFile(fileobj=response) as gz:
+        data = gz.read(50000)
+    bio = BytesIO(data)
+    con = seg.scan_file(bio, ["SourceX", "GroupX"], 1)
+    assert con.ns == 2000
+    assert con.blocks[0].summary["SourceX"] == [0, 0]
+    assert con.blocks[0].summary["GroupX"] == [15, 15]

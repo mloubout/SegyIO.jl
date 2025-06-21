@@ -5,17 +5,22 @@ from .types import (
     BinaryTraceHeader,
     FileHeader,
     SeisBlock,
+    BlockScan,
+    SeisCon,
     FH_BYTE2SAMPLE,
     TH_BYTE2SAMPLE,
 )
 from .read import read_fileheader, read_traceheader, read_file, segy_read
 from .write import write_fileheader, write_traceheader, write_block, segy_write
+from .scan import scan_file, segy_scan
 
 __all__ = [
     "BinaryFileHeader",
     "BinaryTraceHeader",
     "FileHeader",
     "SeisBlock",
+    "BlockScan",
+    "SeisCon",
     "read_fileheader",
     "read_traceheader",
     "read_file",
@@ -24,4 +29,6 @@ __all__ = [
     "write_traceheader",
     "write_block",
     "segy_write",
+    "scan_file",
+    "segy_scan",
 ]
