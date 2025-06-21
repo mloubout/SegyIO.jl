@@ -1,3 +1,5 @@
+"""Shared data structures for the minimal Python implementation."""
+
 from dataclasses import dataclass, field
 from typing import Dict, List
 
@@ -167,6 +169,8 @@ TH_FIELDS = list(TH_BYTE2SAMPLE.keys())
 
 @dataclass
 class BinaryFileHeader:
+    """Container for parsed binary file header values."""
+
     values: Dict[str, int] = field(default_factory=lambda: {k: 0 for k in FH_FIELDS})
 
     def __getattr__(self, name):
@@ -186,11 +190,15 @@ class BinaryFileHeader:
 
 @dataclass
 class FileHeader:
+    """Combined textual and binary file header."""
+
     th: bytes = b" " * 3200
     bfh: BinaryFileHeader = field(default_factory=BinaryFileHeader)
 
 @dataclass
 class BinaryTraceHeader:
+    """Container for parsed binary trace header values."""
+
     values: Dict[str, int] = field(default_factory=lambda: {k: 0 for k in TH_FIELDS})
 
     def __getattr__(self, name):
@@ -210,6 +218,8 @@ class BinaryTraceHeader:
 
 @dataclass
 class SeisBlock:
+    """In-memory representation of a SEGY dataset."""
+
     fileheader: FileHeader
     traceheaders: List[BinaryTraceHeader]
     data: List[List[float]]

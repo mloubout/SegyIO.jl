@@ -4,7 +4,9 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
 import python as seg
+from python.ibm import ibm_to_ieee, ieee_to_ibm
 from python.types import BinaryFileHeader, FileHeader, BinaryTraceHeader, SeisBlock
+from io import BytesIO
 
 DATAFILE = os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'overthrust_2D_shot_1_20.segy')
 
@@ -32,4 +34,39 @@ def test_write_roundtrip(tmp_path):
     out = seg.segy_read(str(tmp))
     assert out.fileheader.bfh.ns == 4
     assert out.traceheaders[0].SourceX == 1234
+    assert out.data == data
+
+
+def test_ibm_conversion():
+    """Ensure IBM -> IEEE conversion works for known constant."""
+    assert ibm_to_ieee(b"\x41\x10\x00\x00") == 1.0
+
+
+def test_fileheader_io():
+    """Round-trip a file header using in-memory bytes."""
+    fh = FileHeader()
+    fh.bfh.Job = 99
+    fh.bfh.Line = 123
+    buf = BytesIO()
+    seg.write.write_fileheader(buf, fh)
+    buf.seek(0)
+    out = seg.read.read_fileheader(buf)
+    assert out.bfh.Job == 99
+    assert out.bfh.Line == 123
+    assert len(buf.getvalue()) == 3600
+
+
+def test_write_read_block_bytesio():
+    """Write and read a simple block using BytesIO."""
+    fh = FileHeader()
+    fh.bfh.ns = 2
+    fh.bfh.DataSampleFormat = 5
+    headers = [BinaryTraceHeader() for _ in range(1)]
+    headers[0].ns = 2
+    data = [[1.0], [2.0]]
+    block = SeisBlock(fh, headers, data)
+    bio = BytesIO()
+    seg.write.write_block(bio, block)
+    bio.seek(0)
+    out = seg.read.read_file(bio)
     assert out.data == data

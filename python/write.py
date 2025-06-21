@@ -1,4 +1,7 @@
+"""Writing utilities for the minimal Python SEGY implementation."""
+
 import struct
+from typing import BinaryIO
 from .types import (
     SeisBlock,
     FileHeader,
@@ -10,7 +13,8 @@ from .types import (
 from .ibm import ieee_to_ibm
 
 
-def write_fileheader(f, fh: FileHeader, bigendian=True):
+def write_fileheader(f: BinaryIO, fh: FileHeader, bigendian: bool = True) -> None:
+    """Write ``fh`` to the file object ``f``."""
     th = fh.th
     if len(th) < 3200:
         th = th + b" " * (3200 - len(th))
@@ -30,7 +34,8 @@ def write_fileheader(f, fh: FileHeader, bigendian=True):
         f.write(b"\x00" * pad)
 
 
-def write_traceheader(f, th: BinaryTraceHeader, bigendian=True):
+def write_traceheader(f: BinaryIO, th: BinaryTraceHeader, bigendian: bool = True) -> None:
+    """Write a single trace header to ``f``."""
     buf = bytearray(240)
     for key in TH_BYTE2SAMPLE:
         val = getattr(th, key)
@@ -43,7 +48,8 @@ def write_traceheader(f, th: BinaryTraceHeader, bigendian=True):
     f.write(buf)
 
 
-def write_block(f, block: SeisBlock, bigendian=True):
+def write_block(f: BinaryIO, block: SeisBlock, bigendian: bool = True) -> None:
+    """Write an entire :class:`SeisBlock` to an open file handle."""
     write_fileheader(f, block.fileheader, bigendian)
     ns = block.fileheader.bfh.ns
     dsf = block.fileheader.bfh.DataSampleFormat
@@ -59,6 +65,7 @@ def write_block(f, block: SeisBlock, bigendian=True):
             f.write(struct.pack(fmt, *trace))
 
 
-def segy_write(path, block: SeisBlock):
-    with open(path, 'wb') as f:
+def segy_write(path: str, block: SeisBlock) -> None:
+    """Convenience wrapper to write ``block`` to ``path``."""
+    with open(path, "wb") as f:
         write_block(f, block)
