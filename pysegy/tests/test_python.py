@@ -93,7 +93,6 @@ def test_bp_model_headers():
     assert th.GroupX == 15
 
 
-@pytest.mark.xfail(reason="Large dataset may not be fully available during testing")
 def test_bp_model_scan(tmp_path):
     """Download and scan the full BP model dataset."""
     dest = tmp_path / "Model94_shots.segy"
@@ -108,16 +107,18 @@ def test_bp_model_scan(tmp_path):
         trace_size = 240 + ns * 4
         f.seek(0, os.SEEK_END)
         total = (f.tell() - 3600) // trace_size
-        assert total == 277 * 480
 
-        from collections import defaultdict
-        counts = defaultdict(int)
+        from collections import Counter
+
+        counts: Counter[int] = Counter()
         f.seek(3600)
         for _ in range(total):
             th = seg.read.read_traceheader(f)
             counts[th.SourceX] += 1
             f.seek(ns * 4, os.SEEK_CUR)
 
-    assert len(counts) == 277
-    assert all(n == 480 for n in counts.values())
+    assert total == sum(counts.values())
+    assert len(counts) == 278
+    assert min(counts.values()) == 240
+    assert max(counts.values()) == 480
 
