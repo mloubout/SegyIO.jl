@@ -18,4 +18,4 @@ SegyIO is a registered package and can be installed directly from the julia pack
 
 SegyIO is implemented for POSIX systems. For Cloud storage, use [CloudSegyIO.jl](https://github.com/slimgroup/CloudSegyIO.jl), the Cloud storage extension of SegyIO.
 
-A minimal Python implementation of the core reader and writer is available in the `python/` directory.
+A minimal Python implementation of the core reader and writer is available in the `python/` directory. Tests for this version run on GitHub Actions with coverage reporting via Codecov.
