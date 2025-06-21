@@ -3,9 +3,9 @@ import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
-import python as seg
-from python.ibm import ibm_to_ieee, ieee_to_ibm
-from python.types import BinaryFileHeader, FileHeader, BinaryTraceHeader, SeisBlock
+import pysegy as seg
+from pysegy.ibm import ibm_to_ieee, ieee_to_ibm
+from pysegy.types import BinaryFileHeader, FileHeader, BinaryTraceHeader, SeisBlock
 from io import BytesIO
 
 DATAFILE = os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'overthrust_2D_shot_1_20.segy')
