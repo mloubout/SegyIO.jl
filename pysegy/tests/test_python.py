@@ -114,7 +114,12 @@ def test_bp_model_scan(tmp_path):
         import shutil
         shutil.copyfileobj(gz, f)
 
-    fh, shots, offsets, counts = seg.segy_scan(str(dest))
+    scan = seg.segy_scan(str(dest))
+
+    fh = scan.fileheader
+    shots = scan.shots
+    offsets = scan.offsets
+    counts = scan.counts
 
     ns = fh.bfh.ns
     trace_size = 240 + ns * 4

@@ -1,11 +1,43 @@
-from typing import List, Tuple
+from typing import List, Tuple, Iterable, Optional
 import os
 
-from .read import read_fileheader, read_traceheader
+from .read import read_fileheader, read_traceheader, read_traces
+from .types import SeisBlock, FileHeader
 
 
-def segy_scan(path: str):
-    """Scan ``path`` for shot locations and trace counts."""
+class SegyScan:
+    """Lazy representation of a SEGY file grouped by shot location."""
+
+    def __init__(self, path: str, fh: FileHeader,
+                 shots: List[Tuple[int, int]],
+                 offsets: List[int], counts: List[int]):
+        self.path = path
+        self.fileheader = fh
+        self.shots = shots
+        self.offsets = offsets
+        self.counts = counts
+
+    def __len__(self) -> int:
+        return len(self.shots)
+
+    def read_shot(self, idx: int, keys: Optional[Iterable[str]] = None) -> SeisBlock:
+        """Read traces for shot ``idx`` from the dataset."""
+        offset = self.offsets[idx]
+        ntr = self.counts[idx]
+        with open(self.path, "rb") as f:
+            f.seek(offset)
+            headers, data = read_traces(
+                f,
+                self.fileheader.bfh.ns,
+                ntr,
+                self.fileheader.bfh.DataSampleFormat,
+                keys,
+            )
+        return SeisBlock(self.fileheader, headers, data)
+
+
+def segy_scan(path: str) -> SegyScan:
+    """Scan ``path`` for shot locations without loading trace data."""
     with open(path, "rb") as f:
         fh = read_fileheader(f)
         ns = fh.bfh.ns
@@ -40,4 +72,4 @@ def segy_scan(path: str):
             shots.append(current)
             counts.append(count)
 
-    return fh, shots, offsets, counts
+    return SegyScan(path, fh, shots, offsets, counts)
