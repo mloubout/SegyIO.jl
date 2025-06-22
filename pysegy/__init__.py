@@ -7,6 +7,7 @@ from .types import (
     SeisBlock,
 )
 from .read import read_fileheader, read_traceheader, read_file, segy_read
+from .scan import SegyScan, segy_scan
 from .write import write_fileheader, write_traceheader, write_block, segy_write
 
 __all__ = [
@@ -14,10 +15,12 @@ __all__ = [
     "BinaryTraceHeader",
     "FileHeader",
     "SeisBlock",
+    "SegyScan",
     "read_fileheader",
     "read_traceheader",
     "read_file",
     "segy_read",
+    "segy_scan",
     "write_fileheader",
     "write_traceheader",
     "write_block",

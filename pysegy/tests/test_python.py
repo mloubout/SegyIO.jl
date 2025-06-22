@@ -114,23 +114,23 @@ def test_bp_model_scan(tmp_path):
         import shutil
         shutil.copyfileobj(gz, f)
 
+    scan = seg.segy_scan(str(dest))
+
+    fh = scan.fileheader
+    shots = scan.shots
+    counts = scan.counts
+
+    ns = fh.bfh.ns
+    trace_size = 240 + ns * 4
     with open(dest, "rb") as f:
-        fh = seg.read.read_fileheader(f)
-        ns = fh.bfh.ns
-        trace_size = 240 + ns * 4
         f.seek(0, os.SEEK_END)
         total = (f.tell() - 3600) // trace_size
 
-        from collections import Counter
+    assert total == int(sum(counts))
+    assert len(shots) == 278
+    assert int(min(counts)) == 240
+    assert int(max(counts)) == 480
 
-        counts: Counter[int] = Counter()
-        f.seek(3600)
-        for _ in range(total):
-            th = seg.read.read_traceheader(f)
-            counts[th.SourceX] += 1
-            f.seek(ns * 4, os.SEEK_CUR)
-
-    assert total == sum(counts.values())
-    assert len(counts) == 278
-    assert min(counts.values()) == 240
-    assert max(counts.values()) == 480
+    hdrs = scan.read_headers(0, keys=["GroupX"])
+    assert hdrs[0].GroupX == 15
+    assert len(hdrs) == counts[0]
