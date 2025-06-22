@@ -118,7 +118,6 @@ def test_bp_model_scan(tmp_path):
 
     fh = scan.fileheader
     shots = scan.shots
-    offsets = scan.offsets
     counts = scan.counts
 
     ns = fh.bfh.ns
@@ -131,3 +130,7 @@ def test_bp_model_scan(tmp_path):
     assert len(shots) == 278
     assert int(min(counts)) == 240
     assert int(max(counts)) == 480
+
+    hdrs = scan.read_headers(0, keys=["GroupX"])
+    assert hdrs[0].GroupX == 15
+    assert len(hdrs) == counts[0]

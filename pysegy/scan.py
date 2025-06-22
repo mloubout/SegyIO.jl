@@ -2,7 +2,7 @@ from typing import List, Tuple, Iterable, Optional
 import os
 
 from .read import read_fileheader, read_traceheader, read_traces
-from .types import SeisBlock, FileHeader
+from .types import SeisBlock, FileHeader, BinaryTraceHeader
 
 
 class SegyScan:
@@ -34,6 +34,22 @@ class SegyScan:
                 keys,
             )
         return SeisBlock(self.fileheader, headers, data)
+
+    def read_headers(
+        self, idx: int, keys: Optional[Iterable[str]] = None
+    ) -> List[BinaryTraceHeader]:
+        """Read trace headers for shot ``idx`` without loading samples."""
+        offset = self.offsets[idx]
+        ntr = self.counts[idx]
+        headers: List[BinaryTraceHeader] = []
+        ns = self.fileheader.bfh.ns
+        with open(self.path, "rb") as f:
+            f.seek(offset)
+            for _ in range(ntr):
+                th = read_traceheader(f, keys)
+                headers.append(th)
+                f.seek(ns * 4, os.SEEK_CUR)
+        return headers
 
 
 def segy_scan(path: str) -> SegyScan:
