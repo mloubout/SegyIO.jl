@@ -1,10 +1,23 @@
-"""Conversion helpers between IBM and IEEE floating point formats."""
+"""
+Conversion helpers between IBM and IEEE floating point formats.
+"""
 
 from typing import Union
 
 
 def ibm_to_ieee(value: Union[bytes, bytearray, int]) -> float:
-    """Convert a 4-byte IBM floating point number to a Python ``float``."""
+    """Convert a 4-byte IBM floating point number to ``float``.
+
+    Parameters
+    ----------
+    value : bytes or int
+        Input value encoded in the IBM 32-bit floating point format.
+
+    Returns
+    -------
+    float
+        Floating point number in IEEE representation.
+    """
     if isinstance(value, (bytes, bytearray)):
         if len(value) != 4:
             raise ValueError("IBM float must be 4 bytes")
@@ -22,7 +35,18 @@ def ibm_to_ieee(value: Union[bytes, bytearray, int]) -> float:
 
 
 def ieee_to_ibm(f: float) -> bytes:
-    """Convert Python ``float`` to an IBM 32-bit float encoded as bytes."""
+    """Convert ``float`` to IBM 32-bit floating point bytes.
+
+    Parameters
+    ----------
+    f : float
+        Numeric value in IEEE representation.
+
+    Returns
+    -------
+    bytes
+        The value encoded using the IBM format.
+    """
     if f == 0.0:
         return b"\x00\x00\x00\x00"
     sign = 0

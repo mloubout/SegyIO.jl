@@ -1,4 +1,6 @@
-"""Shared data structures for the minimal Python implementation."""
+"""
+Shared data structures for the minimal Python implementation.
+"""
 
 from dataclasses import dataclass, field
 from typing import Dict, List
@@ -170,29 +172,38 @@ TH_FIELDS = list(TH_BYTE2SAMPLE.keys())
 
 @dataclass
 class BinaryFileHeader:
-    """Container for parsed binary file header values."""
+    """
+    Container for parsed binary file header values.
+    """
 
-    values: Dict[str, int] = field(default_factory=lambda: {k: 0 for k in FH_FIELDS})
+    values: Dict[str, int] = field(
+        default_factory=lambda: {k: 0 for k in FH_FIELDS}
+    )
 
     def __getattr__(self, name):
+        """Return the value for ``name`` from ``values``."""
         if name in self.values:
             return self.values[name]
         raise AttributeError(name)
 
     def __setattr__(self, name, value):
+        """Set ``name`` in ``values`` when it is a header field."""
         if name == "values" or name not in FH_FIELDS:
             super().__setattr__(name, value)
         else:
             self.values[name] = int(value)
 
     def __repr__(self):
+        """Return a representation listing all header fields."""
         fields = ", ".join(f"{k}={self.values[k]}" for k in FH_FIELDS)
         return f"BinaryFileHeader({fields})"
 
 
 @dataclass
 class FileHeader:
-    """Combined textual and binary file header."""
+    """
+    Combined textual and binary file header.
+    """
 
     th: bytes = b" " * 3200
     bfh: BinaryFileHeader = field(default_factory=BinaryFileHeader)
@@ -200,29 +211,38 @@ class FileHeader:
 
 @dataclass
 class BinaryTraceHeader:
-    """Container for parsed binary trace header values."""
+    """
+    Container for parsed binary trace header values.
+    """
 
-    values: Dict[str, int] = field(default_factory=lambda: {k: 0 for k in TH_FIELDS})
+    values: Dict[str, int] = field(
+        default_factory=lambda: {k: 0 for k in TH_FIELDS}
+    )
 
     def __getattr__(self, name):
+        """Return the header value ``name``."""
         if name in self.values:
             return self.values[name]
         raise AttributeError(name)
 
     def __setattr__(self, name, value):
+        """Assign ``value`` to ``name`` when valid."""
         if name == "values" or name not in TH_FIELDS:
             super().__setattr__(name, value)
         else:
             self.values[name] = int(value)
 
     def __repr__(self):
+        """Return a short representation of the header."""
         fields = " ".join(f"{k}={self.values[k]}" for k in TH_FIELDS[:5])
         return f"BinaryTraceHeader({fields} ...)"
 
 
 @dataclass
 class SeisBlock:
-    """In-memory representation of a SEGY dataset."""
+    """
+    In-memory representation of a SEGY dataset.
+    """
 
     fileheader: FileHeader
     traceheaders: List[BinaryTraceHeader]
