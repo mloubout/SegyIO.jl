@@ -244,6 +244,7 @@ def read_file(
     warn_user: bool = True,
     keys: Optional[Iterable[str]] = None,
     bigendian: bool = True,
+    workers: int = 5,
 ) -> SeisBlock:
     """
     Read a complete SEGY file from an open file handle.
@@ -272,33 +273,19 @@ def read_file(
     end = f.tell()
     ntraces = (end - 3600) // trace_size
     f.seek(3600)
-    headers, data = read_traces(f, ns, ntraces, dsf, keys, bigendian)
-    return SeisBlock(fh, headers, data)
-
-
-async def read_file_async(
-    f: BinaryIO,
-    warn_user: bool = True,
-    keys: Optional[Iterable[str]] = None,
-    bigendian: bool = True,
-    workers: int = 5,
-) -> SeisBlock:
-    """Asynchronous version of :func:`read_file`."""
-    fh = read_fileheader(f, bigendian=bigendian)
-    ns = fh.bfh.ns
-    dsf = fh.bfh.DataSampleFormat
-    trace_size = 240 + ns * 4
-    f.seek(0, 2)
-    end = f.tell()
-    ntraces = (end - 3600) // trace_size
-    f.seek(3600)
-    headers, data = await read_traces_async(
-        f, ns, ntraces, dsf, keys, bigendian, workers
+    headers, data = asyncio.run(
+        read_traces_async(
+            f, ns, ntraces, dsf, keys, bigendian, workers
+        )
     )
     return SeisBlock(fh, headers, data)
 
 
-def segy_read(path: str, keys: Optional[Iterable[str]] = None) -> SeisBlock:
+def segy_read(
+    path: str,
+    keys: Optional[Iterable[str]] = None,
+    workers: int = 5,
+) -> SeisBlock:
     """
     Convenience wrapper to read a SEGY file.
 
@@ -316,7 +303,7 @@ def segy_read(path: str, keys: Optional[Iterable[str]] = None) -> SeisBlock:
     """
     logger.info("Reading SEGY file %s", path)
     with open(path, "rb") as f:
-        block = read_file(f, keys=keys)
+        block = read_file(f, keys=keys, workers=workers)
     logger.info(
         "Loaded header ns=%d dt=%d from %s",
         block.fileheader.bfh.ns,
@@ -334,7 +321,10 @@ async def segy_read_async(
     """Asynchronously read a SEGY file."""
     logger.debug("Async reading %s", path)
     with open(path, "rb") as f:
-        block = await read_file_async(f, keys=keys, workers=workers)
+        loop = asyncio.get_running_loop()
+        block = await loop.run_in_executor(
+            None, read_file, f, True, keys, True, workers
+        )
     logger.info(
         "Loaded header ns=%d dt=%d from %s",
         block.fileheader.bfh.ns,

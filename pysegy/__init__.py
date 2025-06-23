@@ -15,11 +15,10 @@ from .read import (
     read_fileheader,
     read_traceheader,
     read_file,
-    read_file_async,
     segy_read,
     segy_read_async,
 )
-from .scan import SegyScan, segy_scan, segy_scan_async
+from .scan import SegyScan, segy_scan
 from .write import (
     write_fileheader,
     write_traceheader,
@@ -37,11 +36,9 @@ __all__ = [
     "read_fileheader",
     "read_traceheader",
     "read_file",
-    "read_file_async",
     "segy_read",
     "segy_read_async",
     "segy_scan",
-    "segy_scan_async",
     "write_fileheader",
     "write_traceheader",
     "write_block",

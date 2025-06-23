@@ -522,23 +522,16 @@ def segy_scan(
         threads = os.cpu_count() or 1
 
     if file_key is None and os.path.isfile(path):
-        return asyncio.run(
-            _scan_file_async(path, keys, chunk, depth_key, workers)
-        )
-
-    if file_key is None:
-        pattern = "*"
-        directory = path
+        files = [path]
+        directory = os.path.dirname(path) or "."
     else:
         directory = path
-        pattern = file_key
-
-    # Gather and sort all matching file names
-    files = [
-        os.path.join(directory, fname)
-        for fname in os.listdir(directory)
-        if fnmatch.fnmatch(fname, pattern)
-    ]
+        pattern = file_key or "*"
+        files = [
+            os.path.join(directory, fname)
+            for fname in os.listdir(directory)
+            if fnmatch.fnmatch(fname, pattern)
+        ]
     files.sort()
 
     logger.info(
@@ -576,27 +569,3 @@ def segy_scan(
 
     logger.info("Combined scan has %d shots", len(records))
     return SegyScan(fh, records)
-
-
-async def segy_scan_async(
-    path: str,
-    file_key: Optional[str] = None,
-    keys: Optional[Iterable[str]] = None,
-    chunk: int = 1024,
-    depth_key: str = "SourceDepth",
-    threads: Optional[int] = None,
-    workers: int = 5,
-) -> SegyScan:
-    """Run :func:`segy_scan` in a background thread."""
-    loop = asyncio.get_running_loop()
-    return await loop.run_in_executor(
-        None,
-        segy_scan,
-        path,
-        file_key,
-        keys,
-        chunk,
-        depth_key,
-        threads,
-        workers,
-    )
