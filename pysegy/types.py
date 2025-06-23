@@ -179,6 +179,7 @@ class BinaryFileHeader:
     values: Dict[str, int] = field(
         default_factory=lambda: {k: 0 for k in FH_FIELDS}
     )
+    keys_loaded: List[str] = field(default_factory=lambda: list(FH_FIELDS))
 
     def __getattr__(self, name):
         """Return the value for ``name`` from ``values``."""
@@ -188,15 +189,22 @@ class BinaryFileHeader:
 
     def __setattr__(self, name, value):
         """Set ``name`` in ``values`` when it is a header field."""
-        if name == "values" or name not in FH_FIELDS:
+        if name in {"values", "keys_loaded"} or name not in FH_FIELDS:
             super().__setattr__(name, value)
         else:
             self.values[name] = int(value)
+            if name not in self.keys_loaded:
+                self.keys_loaded.append(name)
 
-    def __repr__(self):
-        """Return a representation listing all header fields."""
-        fields = ", ".join(f"{k}={self.values[k]}" for k in FH_FIELDS)
-        return f"BinaryFileHeader({fields})"
+    def __str__(self):
+        """Return a multi-line representation of loaded fields."""
+        lines = ["BinaryFileHeader:"]
+        fields = self.keys_loaded or FH_FIELDS
+        for k in fields:
+            lines.append(f"    {k:30s}: {self.values[k]:9d}")
+        return "\n".join(lines)
+
+    __repr__ = __str__
 
 
 @dataclass
@@ -208,6 +216,12 @@ class FileHeader:
     th: bytes = b" " * 3200
     bfh: BinaryFileHeader = field(default_factory=BinaryFileHeader)
 
+    def __str__(self) -> str:
+        """Return a readable representation of the header."""
+        return str(self.bfh)
+
+    __repr__ = __str__
+
 
 @dataclass
 class BinaryTraceHeader:
@@ -218,6 +232,7 @@ class BinaryTraceHeader:
     values: Dict[str, int] = field(
         default_factory=lambda: {k: 0 for k in TH_FIELDS}
     )
+    keys_loaded: List[str] = field(default_factory=list)
 
     def __getattr__(self, name):
         """Return the header value ``name``."""
@@ -227,15 +242,23 @@ class BinaryTraceHeader:
 
     def __setattr__(self, name, value):
         """Assign ``value`` to ``name`` when valid."""
-        if name == "values" or name not in TH_FIELDS:
+        if name in {"values", "keys_loaded"} or name not in TH_FIELDS:
             super().__setattr__(name, value)
         else:
             self.values[name] = int(value)
+            if name not in self.keys_loaded:
+                self.keys_loaded.append(name)
 
     def __repr__(self):
-        """Return a short representation of the header."""
-        fields = " ".join(f"{k}={self.values[k]}" for k in TH_FIELDS[:5])
-        return f"BinaryTraceHeader({fields} ...)"
+        return self.__str__()
+
+    def __str__(self):
+        """Return a multi-line representation of loaded fields."""
+        lines = ["BinaryTraceHeader:"]
+        fields = self.keys_loaded or TH_FIELDS
+        for k in fields:
+            lines.append(f"    {k:30s}: {self.values[k]:9d}")
+        return "\n".join(lines)
 
 
 @dataclass
@@ -247,3 +270,15 @@ class SeisBlock:
     fileheader: FileHeader
     traceheaders: List[BinaryTraceHeader]
     data: List[List[float]]
+
+    def __len__(self) -> int:
+        return len(self.traceheaders)
+
+    def __str__(self) -> str:
+        lines = ["SeisBlock:"]
+        lines.append(f"    traces: {len(self.traceheaders)}")
+        lines.append(f"    ns: {self.fileheader.bfh.ns}")
+        lines.append(f"    dt: {self.fileheader.bfh.dt}")
+        return "\n".join(lines)
+
+    __repr__ = __str__

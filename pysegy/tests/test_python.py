@@ -186,6 +186,6 @@ def test_scan_unsorted_traces(tmp_path):
 
     scan = seg.segy_scan(str(tmp), keys=["GroupX"])
     assert len(scan.shots) == 2
-    assert scan.shots[0] == (1, 1)
+    assert scan.shots[0] == (1, 1, 0)
     assert scan.counts == [2, 1]
     assert scan.summary(0)["GroupX"] == (1, 3)
