@@ -20,7 +20,8 @@ import struct
 def read_fileheader(
     f: BinaryIO, keys: Optional[Iterable[str]] = None, bigendian: bool = True
 ) -> FileHeader:
-    """Read and parse the binary file header.
+    """
+    Read and parse the binary file header.
 
     Parameters
     ----------
@@ -60,7 +61,8 @@ def read_fileheader(
 def read_traceheader(
     f: BinaryIO, keys: Optional[Iterable[str]] = None, bigendian: bool = True
 ) -> BinaryTraceHeader:
-    """Read a single binary trace header from ``f``.
+    """
+    Read a single binary trace header from ``f``.
 
     Parameters
     ----------
@@ -100,7 +102,8 @@ def read_traces(
     keys: Optional[Iterable[str]] = None,
     bigendian: bool = True,
 ) -> Tuple[List[BinaryTraceHeader], List[List[float]]]:
-    """Read ``ntraces`` traces and their headers from ``f``.
+    """
+    Read ``ntraces`` traces and their headers from ``f``.
 
     Parameters
     ----------
@@ -152,7 +155,8 @@ def read_file(
     keys: Optional[Iterable[str]] = None,
     bigendian: bool = True,
 ) -> SeisBlock:
-    """Read a complete SEGY file from an open file handle.
+    """
+    Read a complete SEGY file from an open file handle.
 
     Parameters
     ----------
@@ -183,7 +187,8 @@ def read_file(
 
 
 def segy_read(path: str, keys: Optional[Iterable[str]] = None) -> SeisBlock:
-    """Convenience wrapper to read a SEGY file.
+    """
+    Convenience wrapper to read a SEGY file.
 
     Parameters
     ----------

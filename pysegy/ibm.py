@@ -6,7 +6,8 @@ from typing import Union
 
 
 def ibm_to_ieee(value: Union[bytes, bytearray, int]) -> float:
-    """Convert a 4-byte IBM floating point number to ``float``.
+    """
+    Convert a 4-byte IBM floating point number to ``float``.
 
     Parameters
     ----------
@@ -35,7 +36,8 @@ def ibm_to_ieee(value: Union[bytes, bytearray, int]) -> float:
 
 
 def ieee_to_ibm(f: float) -> bytes:
-    """Convert ``float`` to IBM 32-bit floating point bytes.
+    """
+    Convert ``float`` to IBM 32-bit floating point bytes.
 
     Parameters
     ----------

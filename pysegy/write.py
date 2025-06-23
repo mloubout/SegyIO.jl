@@ -18,7 +18,8 @@ from .ibm import ieee_to_ibm
 def write_fileheader(
     f: BinaryIO, fh: FileHeader, bigendian: bool = True
 ) -> None:
-    """Write ``fh`` to ``f``.
+    """
+    Write ``fh`` to ``f``.
 
     Parameters
     ----------
@@ -51,7 +52,8 @@ def write_fileheader(
 def write_traceheader(
     f: BinaryIO, th: BinaryTraceHeader, bigendian: bool = True
 ) -> None:
-    """Write a single trace header to ``f``.
+    """
+    Write a single trace header to ``f``.
 
     Parameters
     ----------
@@ -75,7 +77,8 @@ def write_traceheader(
 
 
 def write_block(f: BinaryIO, block: SeisBlock, bigendian: bool = True) -> None:
-    """Write an entire :class:`SeisBlock` to ``f``.
+    """
+    Write an entire :class:`SeisBlock` to ``f``.
 
     Parameters
     ----------
@@ -101,7 +104,8 @@ def write_block(f: BinaryIO, block: SeisBlock, bigendian: bool = True) -> None:
 
 
 def segy_write(path: str, block: SeisBlock) -> None:
-    """Convenience wrapper to write ``block`` to ``path``.
+    """
+    Convenience wrapper to write ``block`` to ``path``.
 
     Parameters
     ----------
