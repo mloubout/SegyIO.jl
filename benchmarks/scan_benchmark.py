@@ -1,5 +1,6 @@
 import os
 import time
+import asyncio
 
 import pysegy as seg
 from pysegy.scan import _scan_file
@@ -23,15 +24,18 @@ def scan_serial():
     return seg.SegyScan(fh, records)
 
 
-def main():
+async def main():
     t0 = time.perf_counter()
     scan_serial()
     t1 = time.perf_counter()
     seg.segy_scan(DATA_DIR, PATTERN)
     t2 = time.perf_counter()
+    await seg.segy_scan_async(DATA_DIR, PATTERN)
+    t3 = time.perf_counter()
     print(f"Sequential: {t1 - t0:.3f}s")
-    print(f"Parallel:   {t2 - t1:.3f}s")
+    print(f"Threaded:   {t2 - t1:.3f}s")
+    print(f"Async:      {t3 - t2:.3f}s")
 
 
 if __name__ == '__main__':
-    main()
+    asyncio.run(main())
