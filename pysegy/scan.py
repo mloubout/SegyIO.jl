@@ -55,6 +55,7 @@ def _parse_header(buf: bytes, keys: Iterable[str]) -> BinaryTraceHeader:
         fmt = ">i" if size == 4 else ">h"
         val = struct.unpack_from(fmt, buf, offset)[0]
         setattr(th, k, val)
+    th.keys_loaded = list(keys)
     return th
 
 

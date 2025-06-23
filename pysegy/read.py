@@ -52,6 +52,7 @@ def read_fileheader(
         val_bytes = text_header[offset:offset+size]
         val = struct.unpack(fmt, val_bytes)[0]
         setattr(bfh, k, val)
+    bfh.keys_loaded = list(keys)
     f.seek(start)
     return FileHeader(text_header[:3200], bfh)
 
@@ -87,6 +88,7 @@ def read_traceheader(
             fmt = "<i" if size == 4 else "<h"
         val = struct.unpack(fmt, hdr_bytes[offset:offset + size])[0]
         setattr(th, k, val)
+    th.keys_loaded = list(keys)
     return th
 
 
