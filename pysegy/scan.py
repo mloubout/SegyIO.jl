@@ -6,13 +6,14 @@ from typing import Dict, Iterable, List, Optional, Tuple
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import asyncio
 import os
-import logging
+import threading
 
 import fnmatch
 from dataclasses import dataclass, field
 import struct
 import numpy as np
 
+from . import logger
 from .read import read_fileheader, read_traceheader, read_traces
 from .types import (
     SeisBlock,
@@ -21,8 +22,6 @@ from .types import (
     TH_BYTE2SAMPLE,
     TH_INT32_FIELDS,
 )
-
-logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -312,7 +311,8 @@ def _scan_file(
     SegyScan
         Object describing all shots found in ``path``.
     """
-    logger.info("Scanning file %s", path)
+    thread = threading.current_thread().name
+    logger.info("%s scanning file %s", thread, path)
     trace_keys = ["SourceX", "SourceY", depth_key]
     if keys is not None:
         for k in keys:
@@ -369,7 +369,7 @@ def _scan_file(
             records[previous].segments.append((seg_start, seg_count))
 
     record_list = sorted(records.values(), key=lambda r: r.shot)
-    logger.info("Found %d shots in %s", len(record_list), path)
+    logger.info("%s found %d shots in %s", thread, len(record_list), path)
     return SegyScan(fh, record_list)
 
 

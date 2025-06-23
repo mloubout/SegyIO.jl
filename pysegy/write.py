@@ -5,7 +5,7 @@ Writing utilities for the minimal Python SEGY implementation.
 import struct
 from typing import BinaryIO
 import asyncio
-import logging
+from . import logger
 from .types import (
     SeisBlock,
     FileHeader,
@@ -15,8 +15,6 @@ from .types import (
     TH_INT32_FIELDS,
 )
 from .ibm import ieee_to_ibm
-
-logger = logging.getLogger(__name__)
 
 
 def write_fileheader(

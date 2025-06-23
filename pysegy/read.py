@@ -13,12 +13,11 @@ from .types import (
 )
 from typing import BinaryIO, Iterable, List, Optional, Tuple
 import asyncio
-import logging
+
+from . import logger
 
 from .ibm import ibm_to_ieee
 import struct
-
-logger = logging.getLogger(__name__)
 
 
 def read_fileheader(

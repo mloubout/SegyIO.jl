@@ -28,3 +28,7 @@ ignore = [
 ]
 exclude = [ ".github" ]
 
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["pysegy*"]
+
