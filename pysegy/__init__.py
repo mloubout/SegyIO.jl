@@ -1,7 +1,6 @@
-"""
-Minimal Python port of SegyIO.jl
-"""
+"""Minimal Python port of SegyIO.jl."""
 
+import logging
 from .types import (
     BinaryFileHeader,
     BinaryTraceHeader,
@@ -23,6 +22,10 @@ from .write import (
     segy_write,
     segy_write_async,
 )
+
+logging.basicConfig(level=logging.INFO)
+
+logger = logging.getLogger(__name__)
 
 __all__ = [
     "BinaryFileHeader",
