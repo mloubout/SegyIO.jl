@@ -3,6 +3,7 @@ import sys
 from io import BytesIO
 import gzip
 import urllib.request
+import shutil
 
 sys.path.insert(
     0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
@@ -13,7 +14,8 @@ from pysegy.ibm import ibm_to_ieee  # noqa: E402
 from pysegy.types import FileHeader, BinaryTraceHeader, SeisBlock  # noqa: E402
 
 DATAFILE = os.path.join(
-    os.path.dirname(__file__), '..', '..', 'data', 'overthrust_2D_shot_1_20.segy'
+    os.path.dirname(__file__), "..", "..", "data",
+    "overthrust_2D_shot_1_20.segy",
 )
 
 
@@ -111,7 +113,6 @@ def test_bp_model_scan(tmp_path):
     dest = tmp_path / "Model94_shots.segy"
     response = urllib.request.urlopen(BP_URL)
     with gzip.GzipFile(fileobj=response) as gz, open(dest, "wb") as f:
-        import shutil
         shutil.copyfileobj(gz, f)
 
     scan = seg.segy_scan(str(dest))
@@ -134,3 +135,57 @@ def test_bp_model_scan(tmp_path):
     hdrs = scan.read_headers(0, keys=["GroupX"])
     assert hdrs[0].GroupX == 15
     assert len(hdrs) == counts[0]
+
+
+def test_scan_directory_pattern():
+    data_dir = os.path.join(
+        os.path.dirname(__file__), "..", "..", "data"
+    )
+    scan = seg.segy_scan(
+        data_dir, "overthrust_2D_shot_*.segy", keys=["GroupX"]
+    )
+    assert isinstance(scan, seg.SegyScan)
+    assert len(scan.shots) == 97
+    assert len(set(scan.paths)) == 5
+    idx = 0  # first shot across all files
+    assert scan.paths[idx].endswith("overthrust_2D_shot_1_20.segy")
+    assert scan.counts[idx] == 127
+    assert scan.summary(idx)["GroupX"] == (100, 6400)
+
+
+def test_scan_unsorted_traces(tmp_path):
+    """Ensure scanning handles files with interleaved shots."""
+    fh = FileHeader()
+    fh.bfh.ns = 1
+    fh.bfh.DataSampleFormat = 5
+
+    hdr1 = BinaryTraceHeader()
+    hdr1.ns = 1
+    hdr1.SourceX = 1
+    hdr1.SourceY = 1
+    hdr1.GroupX = 1
+
+    hdr2 = BinaryTraceHeader()
+    hdr2.ns = 1
+    hdr2.SourceX = 2
+    hdr2.SourceY = 2
+    hdr2.GroupX = 2
+
+    hdr3 = BinaryTraceHeader()
+    hdr3.ns = 1
+    hdr3.SourceX = 1
+    hdr3.SourceY = 1
+    hdr3.GroupX = 3
+
+    headers = [hdr1, hdr2, hdr3]
+    data = [[0.0, 0.0, 0.0]]
+    block = SeisBlock(fh, headers, data)
+    tmp = tmp_path / "unsorted.segy"
+    with open(tmp, "wb") as f:
+        seg.write.write_block(f, block)
+
+    scan = seg.segy_scan(str(tmp), keys=["GroupX"])
+    assert len(scan.shots) == 2
+    assert scan.shots[0] == (1, 1)
+    assert scan.counts == [2, 1]
+    assert scan.summary(0)["GroupX"] == (1, 3)

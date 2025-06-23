@@ -1,4 +1,6 @@
-"""Reading utilities for the minimal Python SEGY implementation."""
+"""
+Reading utilities for the minimal Python SEGY implementation.
+"""
 
 from .types import (
     BinaryFileHeader,
@@ -18,7 +20,22 @@ import struct
 def read_fileheader(
     f: BinaryIO, keys: Optional[Iterable[str]] = None, bigendian: bool = True
 ) -> FileHeader:
-    """Read and parse the binary file header from an open file object."""
+    """Read and parse the binary file header.
+
+    Parameters
+    ----------
+    f : BinaryIO
+        Open binary file handle.
+    keys : Iterable[str], optional
+        Header fields to read; by default all are loaded.
+    bigendian : bool, optional
+        ``True`` when the file is big-endian, ``False`` otherwise.
+
+    Returns
+    -------
+    FileHeader
+        Object containing the textual and binary headers.
+    """
     if keys is None:
         keys = list(FH_BYTE2SAMPLE.keys())
     start = f.tell()
@@ -42,7 +59,22 @@ def read_fileheader(
 def read_traceheader(
     f: BinaryIO, keys: Optional[Iterable[str]] = None, bigendian: bool = True
 ) -> BinaryTraceHeader:
-    """Read a single binary trace header from ``f``."""
+    """Read a single binary trace header from ``f``.
+
+    Parameters
+    ----------
+    f : BinaryIO
+        Open binary file handle positioned at a trace header.
+    keys : Iterable[str], optional
+        Header fields to read; all are loaded when omitted.
+    bigendian : bool, optional
+        ``True`` for big-endian encoding.
+
+    Returns
+    -------
+    BinaryTraceHeader
+        Parsed header object.
+    """
     if keys is None:
         keys = list(TH_BYTE2SAMPLE.keys())
     hdr_bytes = f.read(240)
@@ -66,9 +98,36 @@ def read_traces(
     keys: Optional[Iterable[str]] = None,
     bigendian: bool = True,
 ) -> Tuple[List[BinaryTraceHeader], List[List[float]]]:
-    """Read ``ntraces`` traces and their headers from ``f``."""
-    data: List[List[float]] = [[0.0 for _ in range(ntraces)] for _ in range(ns)]
-    headers: List[BinaryTraceHeader] = [BinaryTraceHeader() for _ in range(ntraces)]
+    """Read ``ntraces`` traces and their headers from ``f``.
+
+    Parameters
+    ----------
+    f : BinaryIO
+        Open file handle positioned at the first trace.
+    ns : int
+        Number of samples per trace.
+    ntraces : int
+        Number of traces to read.
+    datatype : int
+        SEGY data sample format code.
+    keys : Iterable[str], optional
+        Header fields to read for each trace.
+    bigendian : bool, optional
+        ``True`` for big-endian encoding.
+
+    Returns
+    -------
+    tuple
+        ``(headers, data)`` where ``headers`` is a list of
+        :class:`BinaryTraceHeader` and ``data`` is ``ns`` x ``ntraces`` array.
+    """
+    data: List[List[float]] = [
+        [0.0 for _ in range(ntraces)]
+        for _ in range(ns)
+    ]
+    headers: List[BinaryTraceHeader] = [
+        BinaryTraceHeader() for _ in range(ntraces)
+    ]
     for i in range(ntraces):
         hdr = read_traceheader(f, keys, bigendian)
         headers[i] = hdr
@@ -91,7 +150,24 @@ def read_file(
     keys: Optional[Iterable[str]] = None,
     bigendian: bool = True,
 ) -> SeisBlock:
-    """Read a complete SEGY file from an open file handle."""
+    """Read a complete SEGY file from an open file handle.
+
+    Parameters
+    ----------
+    f : BinaryIO
+        File object to read from.
+    warn_user : bool, optional
+        Currently unused.
+    keys : Iterable[str], optional
+        Additional header fields to load with each trace.
+    bigendian : bool, optional
+        Set ``True`` for big-endian encoding.
+
+    Returns
+    -------
+    SeisBlock
+        Entire dataset loaded into memory.
+    """
     fh = read_fileheader(f, bigendian=bigendian)
     ns = fh.bfh.ns
     dsf = fh.bfh.DataSampleFormat
@@ -105,6 +181,19 @@ def read_file(
 
 
 def segy_read(path: str, keys: Optional[Iterable[str]] = None) -> SeisBlock:
-    """Convenience wrapper to read a SEGY file from ``path``."""
+    """Convenience wrapper to read a SEGY file.
+
+    Parameters
+    ----------
+    path : str
+        File system path to the SEGY file.
+    keys : Iterable[str], optional
+        Additional header fields to load with each trace.
+
+    Returns
+    -------
+    SeisBlock
+        Loaded dataset.
+    """
     with open(path, "rb") as f:
         return read_file(f, keys=keys)
