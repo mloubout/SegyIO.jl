@@ -285,6 +285,7 @@ def segy_read(
     path: str,
     keys: Optional[Iterable[str]] = None,
     workers: int = 5,
+    fs=None,
 ) -> SeisBlock:
     """
     Convenience wrapper to read a SEGY file.
@@ -292,7 +293,10 @@ def segy_read(
     Parameters
     ----------
     path : str
-        File system path to the SEGY file.
+        File system path to the SEGY file. When ``fs`` is provided the
+        path is interpreted relative to that filesystem.
+    fs : filesystem-like object, optional
+        Filesystem providing ``open`` if reading from non-local storage.
     keys : Iterable[str], optional
         Additional header fields to load with each trace.
 
@@ -302,7 +306,10 @@ def segy_read(
         Loaded dataset.
     """
     logger.info("Reading SEGY file %s", path)
-    with open(path, "rb") as f:
+
+    opener = fs.open if fs is not None else open
+
+    with opener(path, "rb") as f:
         block = read_file(f, keys=keys, workers=workers)
     logger.info(
         "Loaded header ns=%d dt=%d from %s",
