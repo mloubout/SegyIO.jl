@@ -27,7 +27,7 @@ class ShotRecord:
     """
 
     path: str
-    shot: Tuple[int, int]
+    shot: Tuple[int, int, int]
     segments: List[Tuple[int, int]] = field(default_factory=list)
     summary: dict = field(default_factory=dict)
     ns: int = 0
@@ -36,7 +36,9 @@ class ShotRecord:
     def __str__(self) -> str:
         lines = ["ShotRecord:"]
         lines.append(f"    path: {self.path}")
-        lines.append(f"    source: ({self.shot[0]}, {self.shot[1]})")
+        lines.append(
+            f"    source: ({self.shot[0]}, {self.shot[1]}, {self.shot[2]})"
+        )
         lines.append(f"    traces: {sum(c for _, c in self.segments)}")
         lines.append(f"    ns: {self.ns}, dt: {self.dt}")
         if self.summary:
@@ -182,8 +184,8 @@ class SegyScan:
         return [r.path for r in self.records]
 
     @property
-    def shots(self) -> List[Tuple[int, int]]:
-        """Source coordinates for each shot."""
+    def shots(self) -> List[Tuple[int, int, int]]:
+        """Source coordinates for each shot including depth."""
         return [r.shot for r in self.records]
 
     @property
@@ -284,6 +286,7 @@ def _scan_file(
     path: str,
     keys: Optional[Iterable[str]] = None,
     chunk: int = 1024,
+    depth_key: str = "SourceDepth",
 ) -> SegyScan:
     """
     Scan ``path`` for shot locations.
@@ -296,13 +299,15 @@ def _scan_file(
         Additional header fields to summarise.
     chunk : int, optional
         Number of traces to read at once.
+    depth_key : str, optional
+        Trace header field giving the source depth.
 
     Returns
     -------
     SegyScan
         Object describing all shots found in ``path``.
     """
-    trace_keys = ["SourceX", "SourceY"]
+    trace_keys = ["SourceX", "SourceY", depth_key]
     if keys is not None:
         for k in keys:
             if k not in trace_keys:
@@ -315,9 +320,9 @@ def _scan_file(
         total = (f.tell() - 3600) // (240 + ns * 4)
         f.seek(3600)
 
-        records: Dict[Tuple[int, int], ShotRecord] = {}
+        records: Dict[Tuple[int, int, int], ShotRecord] = {}
 
-        previous: Optional[Tuple[int, int]] = None
+        previous: Optional[Tuple[int, int, int]] = None
         seg_start = 0
         seg_count = 0
 
@@ -329,7 +334,7 @@ def _scan_file(
             trace_keys,
             chunk,
         ):
-            src = (th.SourceX, th.SourceY)
+            src = (th.SourceX, th.SourceY, getattr(th, depth_key))
 
             rec = records.get(src)
             if rec is None:
@@ -363,6 +368,7 @@ def segy_scan(
     file_key: Optional[str] = None,
     keys: Optional[Iterable[str]] = None,
     chunk: int = 1024,
+    depth_key: str = "SourceDepth",
 ) -> SegyScan:
     """
     Scan one or more SEGY files and merge the results.
@@ -378,6 +384,8 @@ def segy_scan(
         Additional header fields to summarise while scanning.
     chunk : int, optional
         Number of traces to read per block.
+    depth_key : str, optional
+        Header name containing the source depth.
 
     Returns
     -------
@@ -387,7 +395,7 @@ def segy_scan(
 
     if file_key is None and os.path.isfile(path):
         # Simple case: single file scan
-        return _scan_file(path, keys, chunk)
+        return _scan_file(path, keys, chunk, depth_key)
 
     if file_key is None:
         pattern = "*"
@@ -403,7 +411,7 @@ def segy_scan(
         if fnmatch.fnmatch(fname, pattern)
     ]
     files.sort()
-    scans = [_scan_file(f, keys, chunk) for f in files]
+    scans = [_scan_file(f, keys, chunk, depth_key) for f in files]
 
     if not scans:
         raise FileNotFoundError("No matching SEGY files found")
