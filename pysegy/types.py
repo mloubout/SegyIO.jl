@@ -270,3 +270,15 @@ class SeisBlock:
     fileheader: FileHeader
     traceheaders: List[BinaryTraceHeader]
     data: List[List[float]]
+
+    def __len__(self) -> int:
+        return len(self.traceheaders)
+
+    def __str__(self) -> str:
+        lines = ["SeisBlock:"]
+        lines.append(f"    traces: {len(self.traceheaders)}")
+        lines.append(f"    ns: {self.fileheader.bfh.ns}")
+        lines.append(f"    dt: {self.fileheader.bfh.dt}")
+        return "\n".join(lines)
+
+    __repr__ = __str__

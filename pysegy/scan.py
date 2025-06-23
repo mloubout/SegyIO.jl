@@ -30,6 +30,22 @@ class ShotRecord:
     shot: Tuple[int, int]
     segments: List[Tuple[int, int]] = field(default_factory=list)
     summary: dict = field(default_factory=dict)
+    ns: int = 0
+    dt: int = 0
+
+    def __str__(self) -> str:
+        lines = ["ShotRecord:"]
+        lines.append(f"    path: {self.path}")
+        lines.append(f"    source: ({self.shot[0]}, {self.shot[1]})")
+        lines.append(f"    traces: {sum(c for _, c in self.segments)}")
+        lines.append(f"    ns: {self.ns}, dt: {self.dt}")
+        if self.summary:
+            lines.append("    summary:")
+            for k, (mn, mx) in self.summary.items():
+                lines.append(f"        {k:30s}: {mn}..{mx}")
+        return "\n".join(lines)
+
+    __repr__ = __str__
 
 
 def _parse_header(buf: bytes, keys: Iterable[str]) -> BinaryTraceHeader:
@@ -254,6 +270,15 @@ class SegyScan:
                     f.seek(ns * 4, os.SEEK_CUR)
         return headers
 
+    def __str__(self) -> str:
+        lines = ["SegyScan:"]
+        lines.append(f"    shots: {len(self.records)}")
+        lines.append(f"    ns: {self.fileheader.bfh.ns}")
+        lines.append(f"    dt: {self.fileheader.bfh.dt}")
+        return "\n".join(lines)
+
+    __repr__ = __str__
+
 
 def _scan_file(
     path: str,
@@ -308,7 +333,7 @@ def _scan_file(
 
             rec = records.get(src)
             if rec is None:
-                rec = ShotRecord(path, src, [], {})
+                rec = ShotRecord(path, src, [], {}, ns, fh.bfh.dt)
                 records[src] = rec
             _update_summary(rec.summary, th, keys or [])
 
