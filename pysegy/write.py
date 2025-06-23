@@ -4,6 +4,7 @@ Writing utilities for the minimal Python SEGY implementation.
 
 import struct
 from typing import BinaryIO
+from . import logger
 from .types import (
     SeisBlock,
     FileHeader,
@@ -114,5 +115,7 @@ def segy_write(path: str, block: SeisBlock) -> None:
     block : SeisBlock
         Dataset to write to disk.
     """
+    logger.info("Writing SEGY file %s", path)
     with open(path, "wb") as f:
         write_block(f, block)
+    logger.info("Finished writing %s", path)

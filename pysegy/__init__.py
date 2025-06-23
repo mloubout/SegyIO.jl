@@ -1,6 +1,9 @@
-"""
-Minimal Python port of SegyIO.jl
-"""
+"""Minimal Python port of SegyIO.jl."""
+# flake8: noqa
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 from .types import (
     BinaryFileHeader,
@@ -8,9 +11,19 @@ from .types import (
     FileHeader,
     SeisBlock,
 )
-from .read import read_fileheader, read_traceheader, read_file, segy_read
+from .read import (
+    read_fileheader,
+    read_traceheader,
+    read_file,
+    segy_read,
+)
 from .scan import SegyScan, segy_scan
-from .write import write_fileheader, write_traceheader, write_block, segy_write
+from .write import (
+    write_fileheader,
+    write_traceheader,
+    write_block,
+    segy_write,
+)
 
 __all__ = [
     "BinaryFileHeader",
@@ -28,3 +41,5 @@ __all__ = [
     "write_block",
     "segy_write",
 ]
+
+logging.basicConfig(level=logging.INFO)

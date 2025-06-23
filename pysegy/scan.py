@@ -3,13 +3,16 @@ Helpers for scanning SEGY files by shot location.
 """
 
 from typing import Dict, Iterable, List, Optional, Tuple
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import os
+import threading
 
 import fnmatch
 from dataclasses import dataclass, field
 import struct
 import numpy as np
 
+from . import logger
 from .read import read_fileheader, read_traceheader, read_traces
 from .types import (
     SeisBlock,
@@ -307,6 +310,8 @@ def _scan_file(
     SegyScan
         Object describing all shots found in ``path``.
     """
+    thread = threading.current_thread().name
+    logger.info("%s scanning file %s", thread, path)
     trace_keys = ["SourceX", "SourceY", depth_key]
     if keys is not None:
         for k in keys:
@@ -315,6 +320,9 @@ def _scan_file(
 
     with open(path, "rb") as f:
         fh = read_fileheader(f)
+        logger.info(
+            "Header for %s: ns=%d dt=%d", path, fh.bfh.ns, fh.bfh.dt
+        )
         ns = fh.bfh.ns
         f.seek(0, os.SEEK_END)
         total = (f.tell() - 3600) // (240 + ns * 4)
@@ -360,6 +368,7 @@ def _scan_file(
             records[previous].segments.append((seg_start, seg_count))
 
     record_list = sorted(records.values(), key=lambda r: r.shot)
+    logger.info("%s found %d shots in %s", thread, len(record_list), path)
     return SegyScan(fh, record_list)
 
 
@@ -369,6 +378,7 @@ def segy_scan(
     keys: Optional[Iterable[str]] = None,
     chunk: int = 1024,
     depth_key: str = "SourceDepth",
+    threads: Optional[int] = None
 ) -> SegyScan:
     """
     Scan one or more SEGY files and merge the results.
@@ -393,37 +403,45 @@ def segy_scan(
         Combined scan object describing all detected shots.
     """
 
-    if file_key is None and os.path.isfile(path):
-        # Simple case: single file scan
-        return _scan_file(path, keys, chunk, depth_key)
+    if threads is None:
+        threads = os.cpu_count() or 1
 
-    if file_key is None:
-        pattern = "*"
-        directory = path
+    if file_key is None and os.path.isfile(path):
+        files = [path]
+        directory = os.path.dirname(path) or "."
     else:
         directory = path
-        pattern = file_key
-
-    # Gather and sort all matching file names
-    files = [
-        os.path.join(directory, fname)
-        for fname in os.listdir(directory)
-        if fnmatch.fnmatch(fname, pattern)
-    ]
+        pattern = file_key or "*"
+        files = [
+            os.path.join(directory, fname)
+            for fname in os.listdir(directory)
+            if fnmatch.fnmatch(fname, pattern)
+        ]
     files.sort()
-    scans = [_scan_file(f, keys, chunk, depth_key) for f in files]
 
-    if not scans:
-        raise FileNotFoundError("No matching SEGY files found")
-
-    fh = scans[0].fileheader
+    logger.info(
+        "Scanning %d files in %s with %d threads",
+        len(files),
+        directory,
+        threads,
+    )
     records: List[ShotRecord] = []
-    for sc in scans:
-        # Ensure all files share the same header before merging
-        if sc.fileheader != fh:
-            raise ValueError("File headers do not match")
-        records.extend(sc.records)
+    with ThreadPoolExecutor(max_workers=threads) as pool:
+        futures = {
+            pool.submit(_scan_file, f, keys, chunk, depth_key): f
+            for f in files
+        }
+        for fut in as_completed(futures):
+            scan = fut.result()
+            fh = scan.fileheader
+            file_path = futures[fut]
+            logger.info("Completed scan of %s", file_path)
+            records.extend(scan.records)
+
+    if not records:
+        raise FileNotFoundError("No matching SEGY files found")
 
     records.sort(key=lambda r: r.shot)
 
+    logger.info("Combined scan has %d shots", len(records))
     return SegyScan(fh, records)

@@ -12,6 +12,10 @@ from .types import (
     TH_INT32_FIELDS,
 )
 from typing import BinaryIO, Iterable, List, Optional, Tuple
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
+
+from . import logger
 
 from .ibm import ibm_to_ieee
 import struct
@@ -133,19 +137,105 @@ def read_traces(
     headers: List[BinaryTraceHeader] = [
         BinaryTraceHeader() for _ in range(ntraces)
     ]
-    for i in range(ntraces):
-        hdr = read_traceheader(f, keys, bigendian)
-        headers[i] = hdr
-        raw = f.read(ns * 4)
-        if datatype == 1:  # IBM float
-            traces = [ibm_to_ieee(raw[j:j + 4]) for j in range(0, ns * 4, 4)]
-            for j, v in enumerate(traces):
-                data[j][i] = v
+
+    trace_size = 240 + ns * 4
+    raw = f.read(trace_size * ntraces)
+
+    if keys is None:
+        keys = list(TH_BYTE2SAMPLE.keys())
+    key_list = list(keys)
+
+    def parse_one(idx: int):
+        offset = idx * trace_size
+        hdr_buf = raw[offset:offset + 240]
+        hdr = BinaryTraceHeader()
+        for k in key_list:
+            offset_k = TH_BYTE2SAMPLE[k]
+            size = 4 if k in TH_INT32_FIELDS else 2
+            fmt = ">i" if size == 4 else ">h"
+            if not bigendian:
+                fmt = "<i" if size == 4 else "<h"
+            val = struct.unpack_from(fmt, hdr_buf, offset_k)[0]
+            setattr(hdr, k, val)
+        hdr.keys_loaded = key_list
+
+        data_buf = raw[offset + 240:offset + trace_size]
+        if datatype == 1:
+            samples = [
+                ibm_to_ieee(data_buf[j:j + 4])
+                for j in range(0, ns * 4, 4)
+            ]
         else:
             fmt = (">%df" % ns) if bigendian else ("<%df" % ns)
-            vals = struct.unpack(fmt, raw)
-            for j, v in enumerate(vals):
-                data[j][i] = v
+            samples = struct.unpack(fmt, data_buf)
+        return idx, hdr, samples
+
+    with ThreadPoolExecutor() as pool:
+        for idx, hdr, samples in pool.map(parse_one, range(ntraces)):
+            headers[idx] = hdr
+            for j, v in enumerate(samples):
+                data[j][idx] = v
+
+    return headers, data
+
+
+async def read_traces_async(
+    f: BinaryIO,
+    ns: int,
+    ntraces: int,
+    datatype: int,
+    keys: Optional[Iterable[str]] = None,
+    bigendian: bool = True,
+    workers: int = 5,
+) -> Tuple[List[BinaryTraceHeader], List[List[float]]]:
+    """Asynchronous version of :func:`read_traces`."""
+    data: List[List[float]] = [
+        [0.0 for _ in range(ntraces)] for _ in range(ns)
+    ]
+    headers: List[BinaryTraceHeader] = [
+        BinaryTraceHeader() for _ in range(ntraces)
+    ]
+
+    trace_size = 240 + ns * 4
+    raw = f.read(trace_size * ntraces)
+
+    if keys is None:
+        keys = list(TH_BYTE2SAMPLE.keys())
+    key_list = list(keys)
+
+    sem = asyncio.Semaphore(workers)
+
+    async def parse_one(idx: int):
+        offset = idx * trace_size
+        hdr_buf = raw[offset:offset + 240]
+        async with sem:
+            hdr = BinaryTraceHeader()
+            for k in key_list:
+                offset_k = TH_BYTE2SAMPLE[k]
+                size = 4 if k in TH_INT32_FIELDS else 2
+                fmt = ">i" if size == 4 else ">h"
+                if not bigendian:
+                    fmt = "<i" if size == 4 else "<h"
+                val = struct.unpack_from(fmt, hdr_buf, offset_k)[0]
+                setattr(hdr, k, val)
+            hdr.keys_loaded = key_list
+        data_buf = raw[offset + 240:offset + trace_size]
+        if datatype == 1:
+            samples = [
+                ibm_to_ieee(data_buf[j:j + 4]) for j in range(0, ns * 4, 4)
+            ]
+        else:
+            fmt = (">%df" % ns) if bigendian else ("<%df" % ns)
+            samples = struct.unpack(fmt, data_buf)
+        return idx, hdr, samples
+
+    tasks = [asyncio.create_task(parse_one(i)) for i in range(ntraces)]
+    for t in asyncio.as_completed(tasks):
+        idx, hdr, samples = await t
+        headers[idx] = hdr
+        for j, v in enumerate(samples):
+            data[j][idx] = v
+
     return headers, data
 
 
@@ -154,6 +244,7 @@ def read_file(
     warn_user: bool = True,
     keys: Optional[Iterable[str]] = None,
     bigendian: bool = True,
+    workers: int = 5,
 ) -> SeisBlock:
     """
     Read a complete SEGY file from an open file handle.
@@ -182,11 +273,19 @@ def read_file(
     end = f.tell()
     ntraces = (end - 3600) // trace_size
     f.seek(3600)
-    headers, data = read_traces(f, ns, ntraces, dsf, keys, bigendian)
+    headers, data = asyncio.run(
+        read_traces_async(
+            f, ns, ntraces, dsf, keys, bigendian, workers
+        )
+    )
     return SeisBlock(fh, headers, data)
 
 
-def segy_read(path: str, keys: Optional[Iterable[str]] = None) -> SeisBlock:
+def segy_read(
+    path: str,
+    keys: Optional[Iterable[str]] = None,
+    workers: int = 5,
+) -> SeisBlock:
     """
     Convenience wrapper to read a SEGY file.
 
@@ -202,5 +301,13 @@ def segy_read(path: str, keys: Optional[Iterable[str]] = None) -> SeisBlock:
     SeisBlock
         Loaded dataset.
     """
+    logger.info("Reading SEGY file %s", path)
     with open(path, "rb") as f:
-        return read_file(f, keys=keys)
+        block = read_file(f, keys=keys, workers=workers)
+    logger.info(
+        "Loaded header ns=%d dt=%d from %s",
+        block.fileheader.bfh.ns,
+        block.fileheader.bfh.dt,
+        path,
+    )
+    return block
