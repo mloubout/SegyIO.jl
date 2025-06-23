@@ -2,7 +2,7 @@
 Helpers for scanning SEGY files by shot location.
 """
 
-from typing import Dict, Iterable, List, Optional, Tuple
+from typing import Dict, Iterable, List, Optional, Tuple, AsyncIterable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from itertools import repeat
 import asyncio
@@ -157,6 +157,44 @@ def _iter_trace_headers(
                 yield pos + i * trace_size, hdr
             pos += n * trace_size
             remaining -= n
+
+
+async def _iter_trace_headers_async(
+    f,
+    start: int,
+    count: int,
+    ns: int,
+    keys: Iterable[str],
+    chunk: int = 1024,
+    workers: int = 5,
+) -> AsyncIterable[Tuple[int, BinaryTraceHeader]]:
+    """Asynchronous version of :func:`_iter_trace_headers`."""
+    trace_size = 240 + ns * 4
+    pos = start
+    remaining = count
+    loop = asyncio.get_running_loop()
+
+    semaphore = asyncio.Semaphore(workers)
+
+    async def parse_one(idx: int, buf: bytes):
+        async with semaphore:
+            hdr = await loop.run_in_executor(None, _parse_header, buf, keys)
+        return idx, hdr
+
+    while remaining > 0:
+        n = min(chunk, remaining)
+        buf = f.read(trace_size * n)
+        tasks = [
+            asyncio.create_task(
+                parse_one(i, buf[i * trace_size:i * trace_size + 240])
+            )
+            for i in range(n)
+        ]
+        for t in asyncio.as_completed(tasks):
+            i, hdr = await t
+            yield pos + i * trace_size, hdr
+        pos += n * trace_size
+        remaining -= n
 
 
 class SegyScan:
@@ -379,12 +417,83 @@ def _scan_file(
     return SegyScan(fh, record_list)
 
 
+async def _scan_file_async(
+    path: str,
+    keys: Optional[Iterable[str]] = None,
+    chunk: int = 1024,
+    depth_key: str = "SourceDepth",
+    workers: int = 5,
+) -> SegyScan:
+    """Asynchronous wrapper around :func:`_scan_file`."""
+    thread = threading.current_thread().name
+    logger.info("%s scanning file %s", thread, path)
+    trace_keys = ["SourceX", "SourceY", depth_key]
+    if keys is not None:
+        for k in keys:
+            if k not in trace_keys:
+                trace_keys.append(k)
+
+    with open(path, "rb") as f:
+        fh = read_fileheader(f)
+        logger.info(
+            "Header for %s: ns=%d dt=%d", path, fh.bfh.ns, fh.bfh.dt
+        )
+        ns = fh.bfh.ns
+        f.seek(0, os.SEEK_END)
+        total = (f.tell() - 3600) // (240 + ns * 4)
+        f.seek(3600)
+
+        records: Dict[Tuple[int, int, int], ShotRecord] = {}
+
+        previous: Optional[Tuple[int, int, int]] = None
+        seg_start = 0
+        seg_count = 0
+
+        async for offset, th in _iter_trace_headers_async(
+            f,
+            3600,
+            total,
+            ns,
+            trace_keys,
+            chunk,
+            workers,
+        ):
+            src = (th.SourceX, th.SourceY, getattr(th, depth_key))
+
+            rec = records.get(src)
+            if rec is None:
+                rec = ShotRecord(path, src, [], {}, ns, fh.bfh.dt)
+                records[src] = rec
+            _update_summary(rec.summary, th, keys or [])
+
+            if previous is None:
+                previous = src
+                seg_start = offset
+                seg_count = 1
+            elif src == previous:
+                seg_count += 1
+            else:
+                records[previous].segments.append((seg_start, seg_count))
+                previous = src
+                seg_start = offset
+                seg_count = 1
+
+        if previous is not None:
+            records[previous].segments.append((seg_start, seg_count))
+
+    record_list = sorted(records.values(), key=lambda r: r.shot)
+    logger.info("%s found %d shots in %s", thread, len(record_list), path)
+    return SegyScan(fh, record_list)
+
+
 def segy_scan(
     path: str,
     file_key: Optional[str] = None,
     keys: Optional[Iterable[str]] = None,
     chunk: int = 1024,
     depth_key: str = "SourceDepth",
+    threads: Optional[int] = None,
+    workers: int = 5,
 ) -> SegyScan:
     """
     Scan one or more SEGY files and merge the results.
@@ -409,9 +518,13 @@ def segy_scan(
         Combined scan object describing all detected shots.
     """
 
+    if threads is None:
+        threads = os.cpu_count() or 1
+
     if file_key is None and os.path.isfile(path):
-        # Simple case: single file scan
-        return _scan_file(path, keys, chunk, depth_key)
+        return asyncio.run(
+            _scan_file_async(path, keys, chunk, depth_key, workers)
+        )
 
     if file_key is None:
         pattern = "*"
@@ -428,16 +541,18 @@ def segy_scan(
     ]
     files.sort()
 
-    logger.info("Scanning %d files in %s", len(files), directory)
+    logger.info(
+        "Scanning %d files in %s with %d threads",
+        len(files),
+        directory,
+        threads,
+    )
     scans = []
-    with ThreadPoolExecutor() as pool:
+    with ThreadPoolExecutor(max_workers=threads) as pool:
         futures = {
             pool.submit(
-                _scan_file,
-                f,
-                keys,
-                chunk,
-                depth_key,
+                asyncio.run,
+                _scan_file_async(f, keys, chunk, depth_key, workers),
             ): f
             for f in files
         }
@@ -469,51 +584,19 @@ async def segy_scan_async(
     keys: Optional[Iterable[str]] = None,
     chunk: int = 1024,
     depth_key: str = "SourceDepth",
+    threads: Optional[int] = None,
+    workers: int = 5,
 ) -> SegyScan:
-    """Asynchronous variant of :func:`segy_scan` using threads."""
-    loop = asyncio.get_event_loop()
-    if file_key is None and os.path.isfile(path):
-        logger.debug("Async scanning single file %s", path)
-        return await loop.run_in_executor(
-            None, _scan_file, path, keys, chunk, depth_key
-        )
-
-    if file_key is None:
-        pattern = "*"
-        directory = path
-    else:
-        directory = path
-        pattern = file_key
-
-    files = [
-        os.path.join(directory, fname)
-        for fname in os.listdir(directory)
-        if fnmatch.fnmatch(fname, pattern)
-    ]
-    files.sort()
-    if not files:
-        raise FileNotFoundError("No matching SEGY files found")
-
-    logger.info("Async scanning %d files in %s", len(files), directory)
-    tasks = [
-        loop.run_in_executor(
-            None, _scan_file, f, keys, chunk, depth_key
-        )
-        for f in files
-    ]
-    scans = []
-    for t in asyncio.as_completed(tasks):
-        result = await t
-        logger.info("Async scan complete")
-        scans.append(result)
-
-    fh = scans[0].fileheader
-    records: List[ShotRecord] = []
-    for sc in scans:
-        if sc.fileheader != fh:
-            raise ValueError("File headers do not match")
-        records.extend(sc.records)
-
-    records.sort(key=lambda r: r.shot)
-
-    return SegyScan(fh, records)
+    """Run :func:`segy_scan` in a background thread."""
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(
+        None,
+        segy_scan,
+        path,
+        file_key,
+        keys,
+        chunk,
+        depth_key,
+        threads,
+        workers,
+    )

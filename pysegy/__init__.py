@@ -15,6 +15,7 @@ from .read import (
     read_fileheader,
     read_traceheader,
     read_file,
+    read_file_async,
     segy_read,
     segy_read_async,
 )
@@ -36,6 +37,7 @@ __all__ = [
     "read_fileheader",
     "read_traceheader",
     "read_file",
+    "read_file_async",
     "segy_read",
     "segy_read_async",
     "segy_scan",
