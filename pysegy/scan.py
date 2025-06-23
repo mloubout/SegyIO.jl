@@ -23,7 +23,6 @@ from .types import (
 )
 
 
-
 @dataclass
 class ShotRecord:
     """
@@ -413,11 +412,12 @@ def segy_scan(
         Combined scan object describing all detected shots.
     """
 
-
     if threads is None:
         threads = os.cpu_count() or 1
 
-    if file_key is None and ((fs is None and os.path.isfile(path)) or (fs and fs.isfile(path))):
+    if file_key is None and (
+        (fs is None and os.path.isfile(path)) or (fs and fs.isfile(path))
+    ):
         files = [path]
         if fs is None:
             directory = os.path.dirname(path) or "."
