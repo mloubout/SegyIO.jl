@@ -5,6 +5,7 @@ Writing utilities for the minimal Python SEGY implementation.
 import struct
 from typing import BinaryIO
 import asyncio
+import logging
 from .types import (
     SeisBlock,
     FileHeader,
@@ -14,6 +15,8 @@ from .types import (
     TH_INT32_FIELDS,
 )
 from .ibm import ieee_to_ibm
+
+logger = logging.getLogger(__name__)
 
 
 def write_fileheader(
@@ -115,11 +118,14 @@ def segy_write(path: str, block: SeisBlock) -> None:
     block : SeisBlock
         Dataset to write to disk.
     """
+    logger.info("Writing SEGY file %s", path)
     with open(path, "wb") as f:
         write_block(f, block)
+    logger.info("Finished writing %s", path)
 
 
 async def segy_write_async(path: str, block: SeisBlock) -> None:
     """Asynchronously write ``block`` to ``path`` using a thread."""
+    logger.debug("Async writing %s", path)
     loop = asyncio.get_event_loop()
     await loop.run_in_executor(None, segy_write, path, block)

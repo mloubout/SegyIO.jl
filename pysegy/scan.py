@@ -3,9 +3,10 @@ Helpers for scanning SEGY files by shot location.
 """
 
 from typing import Dict, Iterable, List, Optional, Tuple
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import asyncio
 import os
+import logging
 
 import fnmatch
 from dataclasses import dataclass, field
@@ -20,6 +21,8 @@ from .types import (
     TH_BYTE2SAMPLE,
     TH_INT32_FIELDS,
 )
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -309,6 +312,7 @@ def _scan_file(
     SegyScan
         Object describing all shots found in ``path``.
     """
+    logger.info("Scanning file %s", path)
     trace_keys = ["SourceX", "SourceY", depth_key]
     if keys is not None:
         for k in keys:
@@ -317,6 +321,9 @@ def _scan_file(
 
     with open(path, "rb") as f:
         fh = read_fileheader(f)
+        logger.info(
+            "Header for %s: ns=%d dt=%d", path, fh.bfh.ns, fh.bfh.dt
+        )
         ns = fh.bfh.ns
         f.seek(0, os.SEEK_END)
         total = (f.tell() - 3600) // (240 + ns * 4)
@@ -362,6 +369,7 @@ def _scan_file(
             records[previous].segments.append((seg_start, seg_count))
 
     record_list = sorted(records.values(), key=lambda r: r.shot)
+    logger.info("Found %d shots in %s", len(record_list), path)
     return SegyScan(fh, record_list)
 
 
@@ -414,12 +422,23 @@ def segy_scan(
     ]
     files.sort()
 
-    # Scan files in parallel using threads
+    logger.info("Scanning %d files in %s", len(files), directory)
+    scans = []
     with ThreadPoolExecutor() as pool:
-        futures = [
-            pool.submit(_scan_file, f, keys, chunk, depth_key) for f in files
-        ]
-        scans = [f.result() for f in futures]
+        futures = {
+            pool.submit(
+                _scan_file,
+                f,
+                keys,
+                chunk,
+                depth_key,
+            ): f
+            for f in files
+        }
+        for fut in as_completed(futures):
+            file_path = futures[fut]
+            logger.info("Completed scan of %s", file_path)
+            scans.append(fut.result())
 
     if not scans:
         raise FileNotFoundError("No matching SEGY files found")
@@ -434,6 +453,7 @@ def segy_scan(
 
     records.sort(key=lambda r: r.shot)
 
+    logger.info("Combined scan has %d shots", len(records))
     return SegyScan(fh, records)
 
 
@@ -447,6 +467,7 @@ async def segy_scan_async(
     """Asynchronous variant of :func:`segy_scan` using threads."""
     loop = asyncio.get_event_loop()
     if file_key is None and os.path.isfile(path):
+        logger.debug("Async scanning single file %s", path)
         return await loop.run_in_executor(
             None, _scan_file, path, keys, chunk, depth_key
         )
@@ -467,11 +488,18 @@ async def segy_scan_async(
     if not files:
         raise FileNotFoundError("No matching SEGY files found")
 
+    logger.info("Async scanning %d files in %s", len(files), directory)
     tasks = [
-        loop.run_in_executor(None, _scan_file, f, keys, chunk, depth_key)
+        loop.run_in_executor(
+            None, _scan_file, f, keys, chunk, depth_key
+        )
         for f in files
     ]
-    scans = await asyncio.gather(*tasks)
+    scans = []
+    for t in asyncio.as_completed(tasks):
+        result = await t
+        logger.info("Async scan complete")
+        scans.append(result)
 
     fh = scans[0].fileheader
     records: List[ShotRecord] = []

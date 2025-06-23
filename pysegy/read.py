@@ -13,9 +13,12 @@ from .types import (
 )
 from typing import BinaryIO, Iterable, List, Optional, Tuple
 import asyncio
+import logging
 
 from .ibm import ibm_to_ieee
 import struct
+
+logger = logging.getLogger(__name__)
 
 
 def read_fileheader(
@@ -203,13 +206,22 @@ def segy_read(path: str, keys: Optional[Iterable[str]] = None) -> SeisBlock:
     SeisBlock
         Loaded dataset.
     """
+    logger.info("Reading SEGY file %s", path)
     with open(path, "rb") as f:
-        return read_file(f, keys=keys)
+        block = read_file(f, keys=keys)
+    logger.info(
+        "Loaded header ns=%d dt=%d from %s",
+        block.fileheader.bfh.ns,
+        block.fileheader.bfh.dt,
+        path,
+    )
+    return block
 
 
 async def segy_read_async(
     path: str, keys: Optional[Iterable[str]] = None
 ) -> SeisBlock:
     """Asynchronously read a SEGY file using a thread."""
+    logger.debug("Async reading %s", path)
     loop = asyncio.get_event_loop()
     return await loop.run_in_executor(None, segy_read, path, keys)
