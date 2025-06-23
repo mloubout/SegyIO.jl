@@ -3,6 +3,8 @@ Helpers for scanning SEGY files by shot location.
 """
 
 from typing import Dict, Iterable, List, Optional, Tuple
+from concurrent.futures import ThreadPoolExecutor
+import asyncio
 import os
 
 import fnmatch
@@ -411,7 +413,13 @@ def segy_scan(
         if fnmatch.fnmatch(fname, pattern)
     ]
     files.sort()
-    scans = [_scan_file(f, keys, chunk, depth_key) for f in files]
+
+    # Scan files in parallel using threads
+    with ThreadPoolExecutor() as pool:
+        futures = [
+            pool.submit(_scan_file, f, keys, chunk, depth_key) for f in files
+        ]
+        scans = [f.result() for f in futures]
 
     if not scans:
         raise FileNotFoundError("No matching SEGY files found")
@@ -420,6 +428,54 @@ def segy_scan(
     records: List[ShotRecord] = []
     for sc in scans:
         # Ensure all files share the same header before merging
+        if sc.fileheader != fh:
+            raise ValueError("File headers do not match")
+        records.extend(sc.records)
+
+    records.sort(key=lambda r: r.shot)
+
+    return SegyScan(fh, records)
+
+
+async def segy_scan_async(
+    path: str,
+    file_key: Optional[str] = None,
+    keys: Optional[Iterable[str]] = None,
+    chunk: int = 1024,
+    depth_key: str = "SourceDepth",
+) -> SegyScan:
+    """Asynchronous variant of :func:`segy_scan` using threads."""
+    loop = asyncio.get_event_loop()
+    if file_key is None and os.path.isfile(path):
+        return await loop.run_in_executor(
+            None, _scan_file, path, keys, chunk, depth_key
+        )
+
+    if file_key is None:
+        pattern = "*"
+        directory = path
+    else:
+        directory = path
+        pattern = file_key
+
+    files = [
+        os.path.join(directory, fname)
+        for fname in os.listdir(directory)
+        if fnmatch.fnmatch(fname, pattern)
+    ]
+    files.sort()
+    if not files:
+        raise FileNotFoundError("No matching SEGY files found")
+
+    tasks = [
+        loop.run_in_executor(None, _scan_file, f, keys, chunk, depth_key)
+        for f in files
+    ]
+    scans = await asyncio.gather(*tasks)
+
+    fh = scans[0].fileheader
+    records: List[ShotRecord] = []
+    for sc in scans:
         if sc.fileheader != fh:
             raise ValueError("File headers do not match")
         records.extend(sc.records)

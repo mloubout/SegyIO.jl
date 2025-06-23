@@ -8,9 +8,21 @@ from .types import (
     FileHeader,
     SeisBlock,
 )
-from .read import read_fileheader, read_traceheader, read_file, segy_read
-from .scan import SegyScan, segy_scan
-from .write import write_fileheader, write_traceheader, write_block, segy_write
+from .read import (
+    read_fileheader,
+    read_traceheader,
+    read_file,
+    segy_read,
+    segy_read_async,
+)
+from .scan import SegyScan, segy_scan, segy_scan_async
+from .write import (
+    write_fileheader,
+    write_traceheader,
+    write_block,
+    segy_write,
+    segy_write_async,
+)
 
 __all__ = [
     "BinaryFileHeader",
@@ -22,9 +34,12 @@ __all__ = [
     "read_traceheader",
     "read_file",
     "segy_read",
+    "segy_read_async",
     "segy_scan",
+    "segy_scan_async",
     "write_fileheader",
     "write_traceheader",
     "write_block",
     "segy_write",
+    "segy_write_async",
 ]

@@ -12,6 +12,7 @@ from .types import (
     TH_INT32_FIELDS,
 )
 from typing import BinaryIO, Iterable, List, Optional, Tuple
+import asyncio
 
 from .ibm import ibm_to_ieee
 import struct
@@ -204,3 +205,11 @@ def segy_read(path: str, keys: Optional[Iterable[str]] = None) -> SeisBlock:
     """
     with open(path, "rb") as f:
         return read_file(f, keys=keys)
+
+
+async def segy_read_async(
+    path: str, keys: Optional[Iterable[str]] = None
+) -> SeisBlock:
+    """Asynchronously read a SEGY file using a thread."""
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(None, segy_read, path, keys)
