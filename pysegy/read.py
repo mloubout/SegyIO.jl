@@ -311,24 +311,3 @@ def segy_read(
         path,
     )
     return block
-
-
-async def segy_read_async(
-    path: str,
-    keys: Optional[Iterable[str]] = None,
-    workers: int = 5,
-) -> SeisBlock:
-    """Asynchronously read a SEGY file."""
-    logger.debug("Async reading %s", path)
-    with open(path, "rb") as f:
-        loop = asyncio.get_running_loop()
-        block = await loop.run_in_executor(
-            None, read_file, f, True, keys, True, workers
-        )
-    logger.info(
-        "Loaded header ns=%d dt=%d from %s",
-        block.fileheader.bfh.ns,
-        block.fileheader.bfh.dt,
-        path,
-    )
-    return block

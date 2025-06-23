@@ -16,7 +16,6 @@ from .read import (
     read_traceheader,
     read_file,
     segy_read,
-    segy_read_async,
 )
 from .scan import SegyScan, segy_scan
 from .write import (
@@ -24,7 +23,6 @@ from .write import (
     write_traceheader,
     write_block,
     segy_write,
-    segy_write_async,
 )
 
 __all__ = [
@@ -37,13 +35,11 @@ __all__ = [
     "read_traceheader",
     "read_file",
     "segy_read",
-    "segy_read_async",
     "segy_scan",
     "write_fileheader",
     "write_traceheader",
     "write_block",
     "segy_write",
-    "segy_write_async",
 ]
 
 logging.basicConfig(level=logging.INFO)

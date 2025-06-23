@@ -20,9 +20,6 @@ dependencies = ["numpy>=2,<3"]
 [project.optional-dependencies]
 dev = ["flake8", "flake8-pyproject"]
 
-[tool.setuptools.packages.find]
-where = ["."]
-
 [tool.setuptools_scm]
 fallback_version = "0+untagged"
 

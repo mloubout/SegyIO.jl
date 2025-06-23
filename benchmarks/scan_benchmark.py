@@ -4,17 +4,11 @@ import pysegy as seg
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), '..', 'data')
 PATTERN = 'overthrust_2D_shot_*.segy'
-FILES = [
-    os.path.join(DATA_DIR, f)
-    for f in os.listdir(DATA_DIR)
-    if f.startswith('overthrust_2D_shot_')
-]
-FILES.sort()
 
 
 def main():
     t0 = time.perf_counter()
-    seg.segy_scan(DATA_DIR, PATTERN, threads=1, workers=1)
+    seg.segy_scan(DATA_DIR, PATTERN, threads=1)
     t1 = time.perf_counter()
     seg.segy_scan(DATA_DIR, PATTERN)
     t2 = time.perf_counter()

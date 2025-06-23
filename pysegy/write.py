@@ -4,7 +4,6 @@ Writing utilities for the minimal Python SEGY implementation.
 
 import struct
 from typing import BinaryIO
-import asyncio
 from . import logger
 from .types import (
     SeisBlock,
@@ -120,10 +119,3 @@ def segy_write(path: str, block: SeisBlock) -> None:
     with open(path, "wb") as f:
         write_block(f, block)
     logger.info("Finished writing %s", path)
-
-
-async def segy_write_async(path: str, block: SeisBlock) -> None:
-    """Asynchronously write ``block`` to ``path`` using a thread."""
-    logger.debug("Async writing %s", path)
-    loop = asyncio.get_event_loop()
-    await loop.run_in_executor(None, segy_write, path, block)
