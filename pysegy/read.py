@@ -13,6 +13,7 @@ from .types import (
 )
 from typing import BinaryIO, Iterable, List, Optional, Tuple
 import asyncio
+from concurrent.futures import ThreadPoolExecutor
 
 from . import logger
 
@@ -136,19 +137,45 @@ def read_traces(
     headers: List[BinaryTraceHeader] = [
         BinaryTraceHeader() for _ in range(ntraces)
     ]
-    for i in range(ntraces):
-        hdr = read_traceheader(f, keys, bigendian)
-        headers[i] = hdr
-        raw = f.read(ns * 4)
-        if datatype == 1:  # IBM float
-            traces = [ibm_to_ieee(raw[j:j + 4]) for j in range(0, ns * 4, 4)]
-            for j, v in enumerate(traces):
-                data[j][i] = v
+
+    trace_size = 240 + ns * 4
+    raw = f.read(trace_size * ntraces)
+
+    if keys is None:
+        keys = list(TH_BYTE2SAMPLE.keys())
+    key_list = list(keys)
+
+    def parse_one(idx: int):
+        offset = idx * trace_size
+        hdr_buf = raw[offset:offset + 240]
+        hdr = BinaryTraceHeader()
+        for k in key_list:
+            offset_k = TH_BYTE2SAMPLE[k]
+            size = 4 if k in TH_INT32_FIELDS else 2
+            fmt = ">i" if size == 4 else ">h"
+            if not bigendian:
+                fmt = "<i" if size == 4 else "<h"
+            val = struct.unpack_from(fmt, hdr_buf, offset_k)[0]
+            setattr(hdr, k, val)
+        hdr.keys_loaded = key_list
+
+        data_buf = raw[offset + 240:offset + trace_size]
+        if datatype == 1:
+            samples = [
+                ibm_to_ieee(data_buf[j:j + 4])
+                for j in range(0, ns * 4, 4)
+            ]
         else:
             fmt = (">%df" % ns) if bigendian else ("<%df" % ns)
-            vals = struct.unpack(fmt, raw)
-            for j, v in enumerate(vals):
-                data[j][i] = v
+            samples = struct.unpack(fmt, data_buf)
+        return idx, hdr, samples
+
+    with ThreadPoolExecutor() as pool:
+        for idx, hdr, samples in pool.map(parse_one, range(ntraces)):
+            headers[idx] = hdr
+            for j, v in enumerate(samples):
+                data[j][idx] = v
+
     return headers, data
 
 

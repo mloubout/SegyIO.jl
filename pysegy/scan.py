@@ -4,6 +4,7 @@ Helpers for scanning SEGY files by shot location.
 
 from typing import Dict, Iterable, List, Optional, Tuple
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from itertools import repeat
 import asyncio
 import os
 import threading
@@ -142,15 +143,20 @@ def _iter_trace_headers(
     trace_size = 240 + ns * 4
     pos = start
     remaining = count
-    while remaining > 0:
-        n = min(chunk, remaining)
-        buf = f.read(trace_size * n)
-        for i in range(n):
-            base = i * trace_size
-            hdr = _parse_header(buf[base:base + 240], keys)
-            yield pos + base, hdr
-        pos += n * trace_size
-        remaining -= n
+    with ThreadPoolExecutor() as pool:
+        while remaining > 0:
+            n = min(chunk, remaining)
+            buf = f.read(trace_size * n)
+            slices = [
+                buf[i * trace_size:i * trace_size + 240]
+                for i in range(n)
+            ]
+            for i, hdr in enumerate(
+                pool.map(_parse_header, slices, repeat(keys))
+            ):
+                yield pos + i * trace_size, hdr
+            pos += n * trace_size
+            remaining -= n
 
 
 class SegyScan:
