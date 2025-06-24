@@ -16,7 +16,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from . import logger
 
-from .ibm import ibm_to_ieee
+from .ibm import ibm_to_ieee, ibm_to_ieee_array
 import struct
 
 # Number of traces to read at a time when loading an entire file
@@ -143,34 +143,30 @@ def read_traces(
         keys = list(TH_BYTE2SAMPLE.keys())
     key_list = list(keys)
 
-    # Pre-compute struct parsers for headers once to avoid per-trace overhead
+    # Pre-compute unpack formats for header fields
     endian_char = ">" if bigendian else "<"
     hdr_parsers = []
     for k in key_list:
         offset_k, size = TH_BYTE2SAMPLE[k]
         fmt = endian_char + ("i" if size == 4 else "h")
-        hdr_parsers.append((k, offset_k, struct.Struct(fmt)))
+        hdr_parsers.append((k, offset_k, fmt))
 
-    data_struct = None
-    if datatype != 1:
-        fmt = f"{endian_char}{ns}f"
-        data_struct = struct.Struct(fmt)
-    ibm_idx = range(0, ns * 4, 4) if datatype == 1 else None
+    ibm = datatype == 1
 
     def parse_one(idx: int):
         offset = idx * trace_size
         hdr_buf = raw[offset:offset + 240]
         hdr = BinaryTraceHeader()
-        for k, offset_k, parser in hdr_parsers:
-            val = parser.unpack_from(hdr_buf, offset_k)[0]
+        for k, offset_k, fmt in hdr_parsers:
+            val = struct.unpack_from(fmt, hdr_buf, offset_k)[0]
             setattr(hdr, k, val)
         hdr.keys_loaded = key_list
 
         data_buf = raw[offset + 240:offset + trace_size]
-        if datatype == 1:
-            samples = [ibm_to_ieee(data_buf[j:j + 4]) for j in ibm_idx]
+        if ibm:
+            samples = ibm_to_ieee_array(data_buf, ns, bigendian)
         else:
-            samples = data_struct.unpack(data_buf)
+            samples = np.frombuffer(data_buf, dtype=endian_char + "f4", count=ns)
         return idx, hdr, samples
 
     with ThreadPoolExecutor() as pool:
