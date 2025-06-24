@@ -242,3 +242,24 @@ def test_save_and_load_scan_fs(tmp_path):
     seg.save_scan(str(dest), scan, fs=fs)
     out = seg.load_scan(str(dest), fs=fs)
     assert out.shots == scan.shots
+
+
+def test_index_and_lazy_data():
+    scan = seg.segy_scan(DATAFILE)
+    rec = scan[0]
+    assert rec.coordinates == scan.shots[0]
+    assert rec._data is None
+    rec.data
+    assert rec.data is not None
+    assert rec._data is not None
+    assert rec.fileheader.bfh.ns == scan.fileheader.bfh.ns
+    all_blocks = scan.data
+    assert len(all_blocks) == len(scan.shots)
+
+
+def test_rec_coordinates():
+    scan = seg.segy_scan(DATAFILE)
+    rec = scan[0]
+    coords = rec.rec_coordinates
+    assert coords.shape[0] == scan.counts[0]
+    assert tuple(coords[0]) == (100, 0, 0)

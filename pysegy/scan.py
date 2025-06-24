@@ -26,22 +26,32 @@ from .types import (
 
 @dataclass
 class ShotRecord:
-    """
-    Information about a single shot location within a SEGY file.
-    """
+    """Information about a single shot location within a SEGY file."""
 
     path: str
-    shot: Tuple[int, int, int]
+    coordinates: Tuple[int, int, int]
+    fileheader: FileHeader
+    rec_depth_key: str = "GroupWaterDepth"
     segments: List[Tuple[int, int]] = field(default_factory=list)
     summary: dict = field(default_factory=dict)
     ns: int = 0
     dt: int = 0
+    _data: Optional[np.ndarray] = field(default=None, init=False, repr=False)
+    _headers: Optional[List[BinaryTraceHeader]] = field(
+        default=None, init=False, repr=False
+    )
+    _rec_coords: Optional[np.ndarray] = field(
+        default=None, init=False, repr=False
+    )
 
     def __str__(self) -> str:
         lines = ["ShotRecord:"]
         lines.append(f"    path: {self.path}")
         lines.append(
-            f"    source: ({self.shot[0]}, {self.shot[1]}, {self.shot[2]})"
+            "    source: ("
+            f"{self.coordinates[0]}, {self.coordinates[1]}, "
+            f"{self.coordinates[2]}"
+            ")"
         )
         lines.append(f"    traces: {sum(c for _, c in self.segments)}")
         lines.append(f"    ns: {self.ns}, dt: {self.dt}")
@@ -52,6 +62,61 @@ class ShotRecord:
         return "\n".join(lines)
 
     __repr__ = __str__
+
+    def read_data(self, keys: Optional[Iterable[str]] = None) -> SeisBlock:
+        """Load all traces for this shot."""
+        data_parts = []
+        for offset, count in self.segments:
+            with open(self.path, "rb") as f:
+                f.seek(offset)
+                h, d = read_traces(
+                    f,
+                    self.fileheader.bfh.ns,
+                    count,
+                    self.fileheader.bfh.DataSampleFormat,
+                    keys,
+                )
+                data_parts.append(d)
+        return np.concatenate(data_parts, axis=0) if data_parts else []
+
+    def read_headers(
+        self, keys: Optional[Iterable[str]] = None
+    ) -> List[BinaryTraceHeader]:
+        """Read only the headers for this shot."""
+        headers: List[BinaryTraceHeader] = []
+        ns = self.fileheader.bfh.ns
+        for offset, count in self.segments:
+            with open(self.path, "rb") as f:
+                f.seek(offset)
+                for _ in range(count):
+                    th = read_traceheader(f, keys)
+                    headers.append(th)
+                    f.seek(ns * 4, os.SEEK_CUR)
+        return headers
+
+    @property
+    def data(self) -> SeisBlock:
+        if self._data is None:
+            self._data = self.read_data()
+        return self._data
+
+    @property
+    def rec_coordinates(self) -> np.ndarray:
+        """Array of receiver coordinates for this shot."""
+        if self._rec_coords is None:
+            hdrs = self.read_headers(
+                keys=["GroupX", "GroupY", self.rec_depth_key]
+            )
+            coords = [
+                (
+                    h.GroupX,
+                    h.GroupY,
+                    getattr(h, self.rec_depth_key),
+                )
+                for h in hdrs
+            ]
+            self._rec_coords = np.asarray(coords, dtype=int)
+        return self._rec_coords
 
 
 def _parse_header(buf: bytes, keys: Iterable[str]) -> BinaryTraceHeader:
@@ -177,6 +242,7 @@ class SegyScan:
         """
         self.fileheader = fh
         self.records = records
+        self._data: Optional[List[SeisBlock]] = None
 
     def __len__(self) -> int:
         """Return the number of distinct shots."""
@@ -190,7 +256,7 @@ class SegyScan:
     @property
     def shots(self) -> List[Tuple[int, int, int]]:
         """Source coordinates for each shot including depth."""
-        return [r.shot for r in self.records]
+        return [r.coordinates for r in self.records]
 
     @property
     def offsets(self) -> List[int]:
@@ -202,11 +268,22 @@ class SegyScan:
         """Total number of traces for each shot."""
         return [sum(c for _, c in r.segments) for r in self.records]
 
+    def __getitem__(self, idx: int) -> ShotRecord:
+        """Return the ``idx``-th :class:`ShotRecord`."""
+        return self.records[idx]
+
+    @property
+    def data(self) -> List[SeisBlock]:
+        """Load data for all shots on first access."""
+        if self._data is None:
+            self._data = [self.read_data(i) for i in range(len(self.records))]
+        return self._data
+
     def summary(self, idx: int) -> dict:
         """Header summaries for the ``idx``-th shot."""
         return self.records[idx].summary
 
-    def read_shot(
+    def read_data(
         self, idx: int, keys: Optional[Iterable[str]] = None
     ) -> SeisBlock:
         """
@@ -291,6 +368,7 @@ def _scan_file(
     keys: Optional[Iterable[str]] = None,
     chunk: int = 1024,
     depth_key: str = "SourceDepth",
+    rec_depth_key: str = "GroupWaterDepth",
     fs=None,
 ) -> SegyScan:
     """
@@ -306,6 +384,8 @@ def _scan_file(
         Number of traces to read at once.
     depth_key : str, optional
         Trace header field giving the source depth.
+    rec_depth_key : str, optional
+        Header field giving the receiver depth.
 
     fs : filesystem-like object, optional
         Filesystem providing ``open`` if reading from non-local storage.
@@ -317,7 +397,14 @@ def _scan_file(
     """
     thread = threading.current_thread().name
     logger.info("%s scanning file %s", thread, path)
-    trace_keys = ["SourceX", "SourceY", depth_key]
+    trace_keys = [
+        "SourceX",
+        "SourceY",
+        depth_key,
+        "GroupX",
+        "GroupY",
+        rec_depth_key,
+    ]
     if keys is not None:
         for k in keys:
             if k not in trace_keys:
@@ -353,7 +440,16 @@ def _scan_file(
 
             rec = records.get(src)
             if rec is None:
-                rec = ShotRecord(path, src, [], {}, ns, fh.bfh.dt)
+                rec = ShotRecord(
+                    path,
+                    src,
+                    fh,
+                    rec_depth_key,
+                    [],
+                    {},
+                    ns,
+                    fh.bfh.dt,
+                )
                 records[src] = rec
             _update_summary(rec.summary, th, keys or [])
 
@@ -374,7 +470,7 @@ def _scan_file(
             # Append the final segment for the last shot
             records[previous].segments.append((seg_start, seg_count))
 
-    record_list = sorted(records.values(), key=lambda r: r.shot)
+    record_list = sorted(records.values(), key=lambda r: r.coordinates)
     logger.info("%s found %d shots in %s", thread, len(record_list), path)
     return SegyScan(fh, record_list)
 
@@ -385,6 +481,7 @@ def segy_scan(
     keys: Optional[Iterable[str]] = None,
     chunk: int = 1024,
     depth_key: str = "SourceDepth",
+    rec_depth_key: str = "GroupWaterDepth",
     threads: Optional[int] = None,
     fs=None,
 ) -> SegyScan:
@@ -404,6 +501,8 @@ def segy_scan(
         Number of traces to read per block.
     depth_key : str, optional
         Header name containing the source depth.
+    rec_depth_key : str, optional
+        Header field containing the receiver depth.
     fs : filesystem-like object, optional
         Filesystem providing ``open`` and ``glob`` if scanning non-local paths.
 
@@ -446,7 +545,9 @@ def segy_scan(
     records: List[ShotRecord] = []
     with ThreadPoolExecutor(max_workers=threads) as pool:
         futures = {
-            pool.submit(_scan_file, f, keys, chunk, depth_key, fs): f
+            pool.submit(
+                _scan_file, f, keys, chunk, depth_key, rec_depth_key, fs
+            ): f
             for f in files
         }
         for fut in as_completed(futures):
@@ -459,7 +560,7 @@ def segy_scan(
     if not records:
         raise FileNotFoundError("No matching SEGY files found")
 
-    records.sort(key=lambda r: r.shot)
+    records.sort(key=lambda r: r.coordinates)
 
     logger.info("Combined scan has %d shots", len(records))
     return SegyScan(fh, records)
