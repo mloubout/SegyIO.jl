@@ -11,6 +11,7 @@ import fnmatch
 from dataclasses import dataclass, field
 import struct
 import numpy as np
+import cloudpickle
 
 from . import logger
 from .read import read_fileheader, read_traceheader, read_traces
@@ -462,3 +463,47 @@ def segy_scan(
 
     logger.info("Combined scan has %d shots", len(records))
     return SegyScan(fh, records)
+
+
+def save_scan(path: str, scan: SegyScan, fs=None) -> None:
+    """Serialize ``scan`` to ``path``.
+
+    Parameters
+    ----------
+    path : str
+        Destination file path. When ``fs`` is provided the path is interpreted
+        relative to that filesystem.
+    scan : SegyScan
+        Object to serialize.
+    fs : filesystem-like object, optional
+        Filesystem providing ``open`` when writing to non-local storage.
+    """
+    logger.info("Saving SegyScan to %s", path)
+    opener = fs.open if fs is not None else open
+    with opener(path, "wb") as f:
+        cloudpickle.dump(scan, f, protocol=cloudpickle.DEFAULT_PROTOCOL)
+    logger.info("Finished saving %s", path)
+
+
+def load_scan(path: str, fs=None) -> SegyScan:
+    """Load a :class:`SegyScan` previously saved with :func:`save_scan`.
+
+    Parameters
+    ----------
+    path : str
+        File system path of the saved object. When ``fs`` is provided the path
+        is interpreted relative to that filesystem.
+    fs : filesystem-like object, optional
+        Filesystem providing ``open`` when reading from non-local storage.
+
+    Returns
+    -------
+    SegyScan
+        Deserialized scan object.
+    """
+    logger.info("Loading SegyScan from %s", path)
+    opener = fs.open if fs is not None else open
+    with opener(path, "rb") as f:
+        scan = cloudpickle.load(f)
+    logger.info("Loaded SegyScan with %d shots", len(scan.records))
+    return scan

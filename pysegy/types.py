@@ -206,6 +206,13 @@ class BinaryFileHeader:
 
     __repr__ = __str__
 
+    def __getstate__(self):
+        return {"values": self.values, "keys_loaded": self.keys_loaded}
+
+    def __setstate__(self, state):
+        super().__setattr__("values", state["values"])
+        super().__setattr__("keys_loaded", state["keys_loaded"])
+
 
 @dataclass
 class FileHeader:
@@ -251,6 +258,13 @@ class BinaryTraceHeader:
 
     def __repr__(self):
         return self.__str__()
+
+    def __getstate__(self):
+        return {"values": self.values, "keys_loaded": self.keys_loaded}
+
+    def __setstate__(self, state):
+        super().__setattr__("values", state["values"])
+        super().__setattr__("keys_loaded", state["keys_loaded"])
 
     def __str__(self):
         """Return a multi-line representation of loaded fields."""
