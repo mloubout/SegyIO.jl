@@ -9,7 +9,6 @@ from .types import (
     SeisBlock,
     FH_BYTE2SAMPLE,
     TH_BYTE2SAMPLE,
-    TH_INT32_FIELDS,
 )
 from typing import BinaryIO, Iterable, List, Optional, Tuple
 import numpy as np
@@ -17,7 +16,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from . import logger
 
-from .ibm import ibm_to_ieee
+from .ibm import ibm_to_ieee_array
 import struct
 
 # Number of traces to read at a time when loading an entire file
@@ -90,8 +89,7 @@ def read_traceheader(
     hdr_bytes = f.read(240)
     th = BinaryTraceHeader()
     for k in keys:
-        offset = TH_BYTE2SAMPLE[k]
-        size = 4 if k in TH_INT32_FIELDS else 2
+        offset, size = TH_BYTE2SAMPLE[k]
         fmt = ">i" if size == 4 else ">h"
         if not bigendian:
             fmt = "<i" if size == 4 else "<h"
@@ -145,29 +143,30 @@ def read_traces(
         keys = list(TH_BYTE2SAMPLE.keys())
     key_list = list(keys)
 
+    # Pre-compute unpack formats for header fields
+    endian_char = ">" if bigendian else "<"
+    hdr_parsers = []
+    for k in key_list:
+        offset_k, size = TH_BYTE2SAMPLE[k]
+        fmt = endian_char + ("i" if size == 4 else "h")
+        hdr_parsers.append((k, offset_k, fmt))
+
+    ibm = datatype == 1
+
     def parse_one(idx: int):
         offset = idx * trace_size
         hdr_buf = raw[offset:offset + 240]
         hdr = BinaryTraceHeader()
-        for k in key_list:
-            offset_k = TH_BYTE2SAMPLE[k]
-            size = 4 if k in TH_INT32_FIELDS else 2
-            fmt = ">i" if size == 4 else ">h"
-            if not bigendian:
-                fmt = "<i" if size == 4 else "<h"
+        for k, offset_k, fmt in hdr_parsers:
             val = struct.unpack_from(fmt, hdr_buf, offset_k)[0]
             setattr(hdr, k, val)
         hdr.keys_loaded = key_list
 
         data_buf = raw[offset + 240:offset + trace_size]
-        if datatype == 1:
-            samples = [
-                ibm_to_ieee(data_buf[j:j + 4])
-                for j in range(0, ns * 4, 4)
-            ]
+        if ibm:
+            samples = ibm_to_ieee_array(data_buf, ns, bigendian)
         else:
-            fmt = (">%df" % ns) if bigendian else ("<%df" % ns)
-            samples = struct.unpack(fmt, data_buf)
+            samples = np.frombuffer(data_buf, dtype=endian_char + "f4", count=ns)
         return idx, hdr, samples
 
     with ThreadPoolExecutor() as pool:
