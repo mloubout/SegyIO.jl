@@ -3,7 +3,7 @@ Shared data structures for the minimal Python implementation.
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 # Byte locations for binary file header fields
 FH_BYTE2SAMPLE: Dict[str, int] = {
@@ -39,7 +39,10 @@ FH_BYTE2SAMPLE: Dict[str, int] = {
     "NumberOfExtTextualHeaders": 3504,
 }
 
-TH_BYTE2SAMPLE: Dict[str, int] = {
+# Byte ranges for trace header fields. Each entry maps a header name to a
+# ``(offset, size)`` tuple where ``size`` is either 2 or 4 bytes depending on
+# the SEGY specification.
+_TH_OFFSETS: Dict[str, int] = {
     "TraceNumWithinLine": 0,
     "TraceNumWithinFile": 4,
     "FieldRecord": 8,
@@ -133,8 +136,8 @@ TH_BYTE2SAMPLE: Dict[str, int] = {
     "Unassigned2": 236,
 }
 
-# Fields that are stored as 32-bit integers in the trace header
-TH_INT32_FIELDS = {
+# Header fields stored as 4-byte integers
+_TH_INT32_FIELDS = {
     "TraceNumWithinLine",
     "TraceNumWithinFile",
     "FieldRecord",
@@ -165,6 +168,16 @@ TH_INT32_FIELDS = {
     "Unassigned1",
     "Unassigned2",
 }
+
+# Final mapping of header field to (offset, size)
+TH_BYTE2SAMPLE: Dict[str, Tuple[int, int]] = {
+    k: (off, 4 if k in _TH_INT32_FIELDS else 2)
+    for k, off in _TH_OFFSETS.items()
+}
+
+# Discard private constants from namespace
+del _TH_OFFSETS
+del _TH_INT32_FIELDS
 
 FH_FIELDS = list(FH_BYTE2SAMPLE.keys())
 TH_FIELDS = list(TH_BYTE2SAMPLE.keys())

@@ -9,7 +9,6 @@ from .types import (
     SeisBlock,
     FH_BYTE2SAMPLE,
     TH_BYTE2SAMPLE,
-    TH_INT32_FIELDS,
 )
 from typing import BinaryIO, Iterable, List, Optional, Tuple
 import numpy as np
@@ -90,8 +89,7 @@ def read_traceheader(
     hdr_bytes = f.read(240)
     th = BinaryTraceHeader()
     for k in keys:
-        offset = TH_BYTE2SAMPLE[k]
-        size = 4 if k in TH_INT32_FIELDS else 2
+        offset, size = TH_BYTE2SAMPLE[k]
         fmt = ">i" if size == 4 else ">h"
         if not bigendian:
             fmt = "<i" if size == 4 else "<h"
@@ -149,8 +147,7 @@ def read_traces(
     endian_char = ">" if bigendian else "<"
     hdr_parsers = []
     for k in key_list:
-        offset_k = TH_BYTE2SAMPLE[k]
-        size = 4 if k in TH_INT32_FIELDS else 2
+        offset_k, size = TH_BYTE2SAMPLE[k]
         fmt = endian_char + ("i" if size == 4 else "h")
         hdr_parsers.append((k, offset_k, struct.Struct(fmt)))
 

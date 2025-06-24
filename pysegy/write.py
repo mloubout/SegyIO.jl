@@ -11,7 +11,6 @@ from .types import (
     BinaryTraceHeader,
     FH_BYTE2SAMPLE,
     TH_BYTE2SAMPLE,
-    TH_INT32_FIELDS,
 )
 from .ibm import ieee_to_ibm
 
@@ -68,8 +67,7 @@ def write_traceheader(
     buf = bytearray(240)
     for key in TH_BYTE2SAMPLE:
         val = getattr(th, key)
-        offset = TH_BYTE2SAMPLE[key]
-        size = 4 if key in TH_INT32_FIELDS else 2
+        offset, size = TH_BYTE2SAMPLE[key]
         fmt = ">i" if size == 4 else ">h"
         if not bigendian:
             fmt = "<i" if size == 4 else "<h"

@@ -21,7 +21,6 @@ from .types import (
     FileHeader,
     BinaryTraceHeader,
     TH_BYTE2SAMPLE,
-    TH_INT32_FIELDS,
 )
 
 
@@ -139,8 +138,7 @@ def _parse_header(buf: bytes, keys: Iterable[str]) -> BinaryTraceHeader:
     """
     th = BinaryTraceHeader()
     for k in keys:
-        offset = TH_BYTE2SAMPLE[k]
-        size = 4 if k in TH_INT32_FIELDS else 2
+        offset, size = TH_BYTE2SAMPLE[k]
         fmt = ">i" if size == 4 else ">h"
         val = struct.unpack_from(fmt, buf, offset)[0]
         setattr(th, k, val)
