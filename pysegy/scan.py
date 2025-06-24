@@ -553,7 +553,6 @@ def segy_scan(
         for fut in as_completed(futures):
             scan = fut.result()
             fh = scan.fileheader
-            file_path = futures[fut]
             records.extend(scan.records)
 
     if not records:
