@@ -148,8 +148,11 @@ def _parse_header(buf: bytes, keys: Iterable[str]) -> BinaryTraceHeader:
     return th
 
 
-def _update_summary(summary: Dict[str, Tuple[int, int]], th: BinaryTraceHeader,
-                    keys: Iterable[str]) -> None:
+def _update_summary(
+    summary: Dict[str, Tuple[float, float]],
+    th: BinaryTraceHeader,
+    keys: Iterable[str],
+) -> None:
     """
     Update ``summary`` with values from ``th``.
 
@@ -163,7 +166,7 @@ def _update_summary(summary: Dict[str, Tuple[int, int]], th: BinaryTraceHeader,
         Header fields to include in the summary.
     """
     for k in keys:
-        v = getattr(th, k)
+        v = get_header([th], k)[0]
         if k in summary:
             mn, mx = summary[k]
             if v < mn:
