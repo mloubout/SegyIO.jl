@@ -65,7 +65,6 @@ class ShotRecord:
 
     def read_data(self, keys: Optional[Iterable[str]] = None) -> SeisBlock:
         """Load all traces for this shot."""
-        headers: List[BinaryTraceHeader] = []
         data_parts = []
         for offset, count in self.segments:
             with open(self.path, "rb") as f:
@@ -77,10 +76,8 @@ class ShotRecord:
                     self.fileheader.bfh.DataSampleFormat,
                     keys,
                 )
-                headers.extend(h)
                 data_parts.append(d)
-        data = np.concatenate(data_parts, axis=0) if data_parts else []
-        return SeisBlock(self.fileheader, headers, data)
+        return np.concatenate(data_parts, axis=0) if data_parts else []
 
     def read_headers(
         self, keys: Optional[Iterable[str]] = None
@@ -99,11 +96,9 @@ class ShotRecord:
 
     @property
     def data(self) -> SeisBlock:
-        if self._data is None or self._headers is None:
-            block = self.read_data()
-            self._data = block.data
-            self._headers = block.traceheaders
-        return SeisBlock(self.fileheader, self._headers, self._data)
+        if self._data is None:
+            self._data = self.read_data()
+        return self._data
 
     @property
     def rec_coordinates(self) -> np.ndarray:

@@ -248,8 +248,11 @@ def test_index_and_lazy_data():
     scan = seg.segy_scan(DATAFILE)
     rec = scan[0]
     assert rec.coordinates == scan.shots[0]
-    block = rec.data
-    assert block.fileheader.bfh.ns == scan.fileheader.bfh.ns
+    assert rec._data is None
+    rec.data
+    assert rec.data is not None
+    assert rec._data is not None
+    assert rec.fileheader.bfh.ns == scan.fileheader.bfh.ns
     all_blocks = scan.data
     assert len(all_blocks) == len(scan.shots)
 
