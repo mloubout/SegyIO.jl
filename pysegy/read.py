@@ -13,6 +13,7 @@ from .types import (
 )
 from typing import BinaryIO, Iterable, List, Optional, Tuple
 import asyncio
+import numpy as np
 from concurrent.futures import ThreadPoolExecutor
 
 from . import logger
@@ -130,10 +131,7 @@ def read_traces(
         ``(headers, data)`` where ``headers`` is a list of
         :class:`BinaryTraceHeader` and ``data`` is ``ns`` x ``ntraces`` array.
     """
-    data: List[List[float]] = [
-        [0.0 for _ in range(ntraces)]
-        for _ in range(ns)
-    ]
+    data: np.ndarray = np.zeros((ns, ntraces), dtype=np.float32)
     headers: List[BinaryTraceHeader] = [
         BinaryTraceHeader() for _ in range(ntraces)
     ]
@@ -173,8 +171,7 @@ def read_traces(
     with ThreadPoolExecutor() as pool:
         for idx, hdr, samples in pool.map(parse_one, range(ntraces)):
             headers[idx] = hdr
-            for j, v in enumerate(samples):
-                data[j][idx] = v
+            data[:, idx] = samples
 
     return headers, data
 
@@ -189,9 +186,7 @@ async def read_traces_async(
     workers: int = 5,
 ) -> Tuple[List[BinaryTraceHeader], List[List[float]]]:
     """Asynchronous version of :func:`read_traces`."""
-    data: List[List[float]] = [
-        [0.0 for _ in range(ntraces)] for _ in range(ns)
-    ]
+    data: np.ndarray = np.zeros((ns, ntraces), dtype=np.float32)
     headers: List[BinaryTraceHeader] = [
         BinaryTraceHeader() for _ in range(ntraces)
     ]
@@ -233,8 +228,7 @@ async def read_traces_async(
     for t in asyncio.as_completed(tasks):
         idx, hdr, samples = await t
         headers[idx] = hdr
-        for j, v in enumerate(samples):
-            data[j][idx] = v
+        data[:, idx] = samples
 
     return headers, data
 

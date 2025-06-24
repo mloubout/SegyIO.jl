@@ -94,7 +94,7 @@ def write_block(f: BinaryIO, block: SeisBlock, bigendian: bool = True) -> None:
     ns = block.fileheader.bfh.ns
     dsf = block.fileheader.bfh.DataSampleFormat
     for i, hdr in enumerate(block.traceheaders):
-        trace = [block.data[j][i] for j in range(ns)]
+        trace = block.data[:, i]
         write_traceheader(f, hdr, bigendian)
         if dsf == 1:
             converted = b"".join(ieee_to_ibm(float(x)) for x in trace)
