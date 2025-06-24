@@ -3,6 +3,7 @@ from io import BytesIO
 import gzip
 import urllib.request
 import shutil
+import fsspec
 
 import pysegy as seg  # noqa: E402
 from pysegy.ibm import ibm_to_ieee  # noqa: E402
@@ -73,6 +74,29 @@ def test_write_read_block_bytesio():
     bio.seek(0)
     out = seg.read.read_file(bio)
     assert out.data == data
+
+
+def test_read_with_filesystem():
+    fs = fsspec.filesystem("file")
+    block = seg.segy_read(DATAFILE, fs=fs)
+    assert block.fileheader.bfh.ns == 751
+
+
+def test_write_with_filesystem(tmp_path):
+    fs = fsspec.filesystem("file")
+    fh = FileHeader()
+    fh.bfh.ns = 2
+    fh.bfh.DataSampleFormat = 5
+    hdr = BinaryTraceHeader()
+    hdr.ns = 2
+    hdr.SourceX = 111
+    data = [[1.0], [2.0]]
+    block = SeisBlock(fh, [hdr], data)
+    dest = tmp_path / "fsout.segy"
+    seg.segy_write(str(dest), block, fs=fs)
+    out = seg.segy_read(str(dest), fs=fs)
+    assert out.fileheader.bfh.ns == 2
+    assert out.traceheaders[0].SourceX == 111
 
 
 BP_URL = (
@@ -146,6 +170,21 @@ def test_scan_directory_pattern():
     assert scan.paths[idx].endswith("overthrust_2D_shot_1_20.segy")
     assert scan.counts[idx] == 127
     assert scan.summary(idx)["GroupX"] == (100, 6400)
+
+
+def test_scan_with_filesystem():
+    fs = fsspec.filesystem("file")
+    data_dir = os.path.join(
+        os.path.dirname(__file__), "..", "..", "data"
+    )
+    scan = seg.segy_scan(
+        data_dir,
+        "overthrust_2D_shot_*.segy",
+        keys=["GroupX"],
+        fs=fs,
+    )
+    assert isinstance(scan, seg.SegyScan)
+    assert len(scan.shots) == 97
 
 
 def test_scan_unsorted_traces(tmp_path):

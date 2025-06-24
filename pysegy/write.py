@@ -104,18 +104,22 @@ def write_block(f: BinaryIO, block: SeisBlock, bigendian: bool = True) -> None:
             f.write(struct.pack(fmt, *trace))
 
 
-def segy_write(path: str, block: SeisBlock) -> None:
+def segy_write(path: str, block: SeisBlock, fs=None) -> None:
     """
     Convenience wrapper to write ``block`` to ``path``.
 
     Parameters
     ----------
     path : str
-        Destination file path.
+        Destination file path. When ``fs`` is provided the path is
+        interpreted relative to that filesystem.
     block : SeisBlock
         Dataset to write to disk.
     """
     logger.info("Writing SEGY file %s", path)
-    with open(path, "wb") as f:
+
+    opener = fs.open if fs is not None else open
+
+    with opener(path, "wb") as f:
         write_block(f, block)
     logger.info("Finished writing %s", path)

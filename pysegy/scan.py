@@ -290,6 +290,7 @@ def _scan_file(
     keys: Optional[Iterable[str]] = None,
     chunk: int = 1024,
     depth_key: str = "SourceDepth",
+    fs=None,
 ) -> SegyScan:
     """
     Scan ``path`` for shot locations.
@@ -305,6 +306,9 @@ def _scan_file(
     depth_key : str, optional
         Trace header field giving the source depth.
 
+    fs : filesystem-like object, optional
+        Filesystem providing ``open`` if reading from non-local storage.
+
     Returns
     -------
     SegyScan
@@ -318,7 +322,9 @@ def _scan_file(
             if k not in trace_keys:
                 trace_keys.append(k)
 
-    with open(path, "rb") as f:
+    opener = fs.open if fs is not None else open
+
+    with opener(path, "rb") as f:
         fh = read_fileheader(f)
         logger.info(
             "Header for %s: ns=%d dt=%d", path, fh.bfh.ns, fh.bfh.dt
@@ -378,7 +384,8 @@ def segy_scan(
     keys: Optional[Iterable[str]] = None,
     chunk: int = 1024,
     depth_key: str = "SourceDepth",
-    threads: Optional[int] = None
+    threads: Optional[int] = None,
+    fs=None,
 ) -> SegyScan:
     """
     Scan one or more SEGY files and merge the results.
@@ -396,6 +403,8 @@ def segy_scan(
         Number of traces to read per block.
     depth_key : str, optional
         Header name containing the source depth.
+    fs : filesystem-like object, optional
+        Filesystem providing ``open`` and ``glob`` if scanning non-local paths.
 
     Returns
     -------
@@ -406,17 +415,25 @@ def segy_scan(
     if threads is None:
         threads = os.cpu_count() or 1
 
-    if file_key is None and os.path.isfile(path):
+    if file_key is None and (
+        (fs is None and os.path.isfile(path)) or (fs and fs.isfile(path))
+    ):
         files = [path]
-        directory = os.path.dirname(path) or "."
+        if fs is None:
+            directory = os.path.dirname(path) or "."
+        else:
+            directory = getattr(fs, "_parent", os.path.dirname)(path)
     else:
         directory = path
         pattern = file_key or "*"
-        files = [
-            os.path.join(directory, fname)
-            for fname in os.listdir(directory)
-            if fnmatch.fnmatch(fname, pattern)
-        ]
+        if fs is None:
+            files = [
+                os.path.join(directory, fname)
+                for fname in os.listdir(directory)
+                if fnmatch.fnmatch(fname, pattern)
+            ]
+        else:
+            files = fs.glob(f"{directory.rstrip('/')}/{pattern}")
     files.sort()
 
     logger.info(
@@ -428,7 +445,7 @@ def segy_scan(
     records: List[ShotRecord] = []
     with ThreadPoolExecutor(max_workers=threads) as pool:
         futures = {
-            pool.submit(_scan_file, f, keys, chunk, depth_key): f
+            pool.submit(_scan_file, f, keys, chunk, depth_key, fs): f
             for f in files
         }
         for fut in as_completed(futures):

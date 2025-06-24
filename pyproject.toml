@@ -15,7 +15,10 @@ classifiers = [
   "Programming Language :: Python :: 3",
 ]
 license = { file = "LICENSE" }
-dependencies = ["numpy>=2,<3"]
+dependencies = [
+    "numpy>=2,<3",
+    "fsspec>=2024.3",
+]
 
 [project.optional-dependencies]
 dev = ["flake8", "flake8-pyproject"]
