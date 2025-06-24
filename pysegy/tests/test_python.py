@@ -264,3 +264,26 @@ def test_rec_coordinates():
     coords = rec.rec_coordinates
     assert coords.shape[0] == scan.counts[0]
     assert tuple(coords[0]) == (100, 0, 0)
+
+
+def test_get_header_scaling():
+    fh = FileHeader()
+    fh.bfh.ns = 1
+    fh.bfh.DataSampleFormat = 5
+
+    h1 = BinaryTraceHeader()
+    h1.ns = 1
+    h1.SourceX = 10
+    h1.RecSourceScalar = 2
+
+    h2 = BinaryTraceHeader()
+    h2.ns = 1
+    h2.SourceX = 20
+    h2.RecSourceScalar = -2
+
+    block = SeisBlock(fh, [h1, h2], np.zeros((1, 2), dtype=np.float32))
+
+    vals = seg.get_header(block, "SourceX")
+    assert vals == [20, 10]
+    raw = seg.get_header(block, "SourceX", scale=False)
+    assert raw == [10, 20]
