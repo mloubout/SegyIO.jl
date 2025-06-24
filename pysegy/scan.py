@@ -36,7 +36,10 @@ class ShotRecord:
     summary: dict = field(default_factory=dict)
     ns: int = 0
     dt: int = 0
-    _data: Optional[SeisBlock] = field(default=None, init=False, repr=False)
+    _data: Optional[np.ndarray] = field(default=None, init=False, repr=False)
+    _headers: Optional[List[BinaryTraceHeader]] = field(
+        default=None, init=False, repr=False
+    )
     _rec_coords: Optional[np.ndarray] = field(
         default=None, init=False, repr=False
     )
@@ -96,9 +99,11 @@ class ShotRecord:
 
     @property
     def data(self) -> SeisBlock:
-        if self._data is None:
-            self._data = self.read_data()
-        return self._data
+        if self._data is None or self._headers is None:
+            block = self.read_data()
+            self._data = block.data
+            self._headers = block.traceheaders
+        return SeisBlock(self.fileheader, self._headers, self._data)
 
     @property
     def rec_coordinates(self) -> np.ndarray:
