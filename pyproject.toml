@@ -18,6 +18,7 @@ license = { file = "LICENSE" }
 dependencies = [
     "numpy>=2,<3",
     "fsspec>=2024.3",
+    "cloudpickle>=3",
 ]
 
 [project.optional-dependencies]

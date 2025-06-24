@@ -223,3 +223,22 @@ def test_scan_unsorted_traces(tmp_path):
     assert scan.shots[0] == (1, 1, 0)
     assert scan.counts == [2, 1]
     assert scan.summary(0)["GroupX"] == (1, 3)
+
+
+def test_save_and_load_scan(tmp_path):
+    scan = seg.segy_scan(DATAFILE)
+    dest = tmp_path / "scan.pkl"
+    seg.save_scan(str(dest), scan)
+    out = seg.load_scan(str(dest))
+    assert isinstance(out, seg.SegyScan)
+    assert out.shots == scan.shots
+    assert out.counts == scan.counts
+
+
+def test_save_and_load_scan_fs(tmp_path):
+    fs = fsspec.filesystem("file")
+    scan = seg.segy_scan(DATAFILE)
+    dest = tmp_path / "scan_fs.pkl"
+    seg.save_scan(str(dest), scan, fs=fs)
+    out = seg.load_scan(str(dest), fs=fs)
+    assert out.shots == scan.shots
