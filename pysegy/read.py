@@ -145,29 +145,35 @@ def read_traces(
         keys = list(TH_BYTE2SAMPLE.keys())
     key_list = list(keys)
 
+    # Pre-compute struct parsers for headers once to avoid per-trace overhead
+    endian_char = ">" if bigendian else "<"
+    hdr_parsers = []
+    for k in key_list:
+        offset_k = TH_BYTE2SAMPLE[k]
+        size = 4 if k in TH_INT32_FIELDS else 2
+        fmt = endian_char + ("i" if size == 4 else "h")
+        hdr_parsers.append((k, offset_k, struct.Struct(fmt)))
+
+    data_struct = None
+    if datatype != 1:
+        fmt = f"{endian_char}{ns}f"
+        data_struct = struct.Struct(fmt)
+    ibm_idx = range(0, ns * 4, 4) if datatype == 1 else None
+
     def parse_one(idx: int):
         offset = idx * trace_size
         hdr_buf = raw[offset:offset + 240]
         hdr = BinaryTraceHeader()
-        for k in key_list:
-            offset_k = TH_BYTE2SAMPLE[k]
-            size = 4 if k in TH_INT32_FIELDS else 2
-            fmt = ">i" if size == 4 else ">h"
-            if not bigendian:
-                fmt = "<i" if size == 4 else "<h"
-            val = struct.unpack_from(fmt, hdr_buf, offset_k)[0]
+        for k, offset_k, parser in hdr_parsers:
+            val = parser.unpack_from(hdr_buf, offset_k)[0]
             setattr(hdr, k, val)
         hdr.keys_loaded = key_list
 
         data_buf = raw[offset + 240:offset + trace_size]
         if datatype == 1:
-            samples = [
-                ibm_to_ieee(data_buf[j:j + 4])
-                for j in range(0, ns * 4, 4)
-            ]
+            samples = [ibm_to_ieee(data_buf[j:j + 4]) for j in ibm_idx]
         else:
-            fmt = (">%df" % ns) if bigendian else ("<%df" % ns)
-            samples = struct.unpack(fmt, data_buf)
+            samples = data_struct.unpack(data_buf)
         return idx, hdr, samples
 
     with ThreadPoolExecutor() as pool:
