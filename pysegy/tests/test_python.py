@@ -281,9 +281,22 @@ def test_get_header_scaling():
     h2.SourceX = 20
     h2.RecSourceScalar = -2
 
-    block = SeisBlock(fh, [h1, h2], np.zeros((1, 2), dtype=np.float32))
+    h3 = BinaryTraceHeader()
+    h3.ns = 1
+    h3.SourceX = 5
+    h3.RecSourceScalar = 1
+
+    h4 = BinaryTraceHeader()
+    h4.ns = 1
+    h4.SourceX = 7
+    h4.RecSourceScalar = 0
+
+    headers = [h1, h2, h3, h4]
+    block = SeisBlock(fh, headers, np.zeros((1, 4), dtype=np.float32))
 
     vals = seg.get_header(block, "SourceX")
-    assert vals == [20, 10]
+    assert vals[:2] == [20, 10]
+    assert vals[2:] == [5, 7]
+
     raw = seg.get_header(block, "SourceX", scale=False)
-    assert raw == [10, 20]
+    assert raw == [10, 20, 5, 7]

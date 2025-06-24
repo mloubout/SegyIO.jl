@@ -21,6 +21,9 @@ from . import logger
 from .ibm import ibm_to_ieee
 import struct
 
+# Number of traces to read at a time when loading an entire file
+TRACE_CHUNKSIZE = 512
+
 
 def read_fileheader(
     f: BinaryIO, keys: Optional[Iterable[str]] = None, bigendian: bool = True
@@ -253,11 +256,14 @@ def read_file(
         Additional header fields to load with each trace.
     bigendian : bool, optional
         Set ``True`` for big-endian encoding.
+    workers : int, optional
+        Unused parameter kept for backwards compatibility.
 
     Returns
     -------
     SeisBlock
-        Entire dataset loaded into memory.
+        Entire dataset loaded into memory. The file is read in chunks of
+        ``TRACE_CHUNKSIZE`` traces to limit peak memory usage.
     """
     fh = read_fileheader(f, bigendian=bigendian)
     ns = fh.bfh.ns
@@ -267,11 +273,20 @@ def read_file(
     end = f.tell()
     ntraces = (end - 3600) // trace_size
     f.seek(3600)
-    headers, data = asyncio.run(
-        read_traces_async(
-            f, ns, ntraces, dsf, keys, bigendian, workers
+    headers: List[BinaryTraceHeader] = [BinaryTraceHeader() for _ in range(ntraces)]
+    data: np.ndarray = np.zeros((ns, ntraces), dtype=np.float32)
+
+    idx = 0
+    while idx < ntraces:
+        count = min(TRACE_CHUNKSIZE, ntraces - idx)
+        h, d = read_traces(
+            f, ns, count, dsf, keys, bigendian
         )
-    )
+        for j in range(count):
+            headers[idx + j] = h[j]
+            data[:, idx + j] = d[:, j]
+        idx += count
+
     return SeisBlock(fh, headers, data)
 
 
