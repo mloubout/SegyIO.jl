@@ -252,3 +252,11 @@ def test_index_and_lazy_data():
     assert block.fileheader.bfh.ns == scan.fileheader.bfh.ns
     all_blocks = scan.data
     assert len(all_blocks) == len(scan.shots)
+
+
+def test_rec_coordinates():
+    scan = seg.segy_scan(DATAFILE)
+    rec = scan[0]
+    coords = rec.rec_coordinates
+    assert coords.shape[0] == scan.counts[0]
+    assert tuple(coords[0]) == (100, 0, 0)

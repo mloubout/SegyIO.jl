@@ -31,18 +31,23 @@ class ShotRecord:
     path: str
     coordinates: Tuple[int, int, int]
     fileheader: FileHeader
+    rec_depth_key: str = "GroupWaterDepth"
     segments: List[Tuple[int, int]] = field(default_factory=list)
     summary: dict = field(default_factory=dict)
     ns: int = 0
     dt: int = 0
     _data: Optional[SeisBlock] = field(default=None, init=False, repr=False)
+    _rec_coords: Optional[np.ndarray] = field(
+        default=None, init=False, repr=False
+    )
 
     def __str__(self) -> str:
         lines = ["ShotRecord:"]
         lines.append(f"    path: {self.path}")
         lines.append(
             "    source: ("
-            f"{self.coordinates[0]}, {self.coordinates[1]}, {self.coordinates[2]}"
+            f"{self.coordinates[0]}, {self.coordinates[1]}, "
+            f"{self.coordinates[2]}"
             ")"
         )
         lines.append(f"    traces: {sum(c for _, c in self.segments)}")
@@ -94,6 +99,24 @@ class ShotRecord:
         if self._data is None:
             self._data = self.read_data()
         return self._data
+
+    @property
+    def rec_coordinates(self) -> np.ndarray:
+        """Array of receiver coordinates for this shot."""
+        if self._rec_coords is None:
+            hdrs = self.read_headers(
+                keys=["GroupX", "GroupY", self.rec_depth_key]
+            )
+            coords = [
+                (
+                    h.GroupX,
+                    h.GroupY,
+                    getattr(h, self.rec_depth_key),
+                )
+                for h in hdrs
+            ]
+            self._rec_coords = np.asarray(coords, dtype=int)
+        return self._rec_coords
 
 
 def _parse_header(buf: bytes, keys: Iterable[str]) -> BinaryTraceHeader:
@@ -345,6 +368,7 @@ def _scan_file(
     keys: Optional[Iterable[str]] = None,
     chunk: int = 1024,
     depth_key: str = "SourceDepth",
+    rec_depth_key: str = "GroupWaterDepth",
     fs=None,
 ) -> SegyScan:
     """
@@ -360,6 +384,8 @@ def _scan_file(
         Number of traces to read at once.
     depth_key : str, optional
         Trace header field giving the source depth.
+    rec_depth_key : str, optional
+        Header field giving the receiver depth.
 
     fs : filesystem-like object, optional
         Filesystem providing ``open`` if reading from non-local storage.
@@ -371,7 +397,14 @@ def _scan_file(
     """
     thread = threading.current_thread().name
     logger.info("%s scanning file %s", thread, path)
-    trace_keys = ["SourceX", "SourceY", depth_key]
+    trace_keys = [
+        "SourceX",
+        "SourceY",
+        depth_key,
+        "GroupX",
+        "GroupY",
+        rec_depth_key,
+    ]
     if keys is not None:
         for k in keys:
             if k not in trace_keys:
@@ -407,7 +440,16 @@ def _scan_file(
 
             rec = records.get(src)
             if rec is None:
-                rec = ShotRecord(path, src, fh, [], {}, ns, fh.bfh.dt)
+                rec = ShotRecord(
+                    path,
+                    src,
+                    fh,
+                    rec_depth_key,
+                    [],
+                    {},
+                    ns,
+                    fh.bfh.dt,
+                )
                 records[src] = rec
             _update_summary(rec.summary, th, keys or [])
 
@@ -439,6 +481,7 @@ def segy_scan(
     keys: Optional[Iterable[str]] = None,
     chunk: int = 1024,
     depth_key: str = "SourceDepth",
+    rec_depth_key: str = "GroupWaterDepth",
     threads: Optional[int] = None,
     fs=None,
 ) -> SegyScan:
@@ -458,6 +501,8 @@ def segy_scan(
         Number of traces to read per block.
     depth_key : str, optional
         Header name containing the source depth.
+    rec_depth_key : str, optional
+        Header field containing the receiver depth.
     fs : filesystem-like object, optional
         Filesystem providing ``open`` and ``glob`` if scanning non-local paths.
 
@@ -500,7 +545,9 @@ def segy_scan(
     records: List[ShotRecord] = []
     with ThreadPoolExecutor(max_workers=threads) as pool:
         futures = {
-            pool.submit(_scan_file, f, keys, chunk, depth_key, fs): f
+            pool.submit(
+                _scan_file, f, keys, chunk, depth_key, rec_depth_key, fs
+            ): f
             for f in files
         }
         for fut in as_completed(futures):
