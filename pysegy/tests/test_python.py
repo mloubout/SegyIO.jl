@@ -221,7 +221,7 @@ def test_scan_unsorted_traces(tmp_path):
 
     scan = seg.segy_scan(str(tmp), keys=["GroupX"])
     assert len(scan.shots) == 2
-    assert scan.shots[0] == (1, 1, 0)
+    assert scan.shots[0] == (1.0, 1.0, 0.0)
     assert scan.counts == [2, 1]
     assert scan.summary(0)["GroupX"] == (1, 3)
 
@@ -263,7 +263,7 @@ def test_rec_coordinates():
     rec = scan[0]
     coords = rec.rec_coordinates
     assert coords.shape[0] == scan.counts[0]
-    assert tuple(coords[0]) == (100, 0, 0)
+    assert tuple(coords[0]) == (100.0, 0.0, 0.0)
 
 
 def test_get_header_scaling():

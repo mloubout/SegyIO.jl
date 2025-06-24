@@ -15,6 +15,7 @@ import cloudpickle
 
 from . import logger
 from .read import read_fileheader, read_traceheader, read_traces
+from .utils import get_header
 from .types import (
     SeisBlock,
     FileHeader,
@@ -29,7 +30,7 @@ class ShotRecord:
     """Information about a single shot location within a SEGY file."""
 
     path: str
-    coordinates: Tuple[int, int, int]
+    coordinates: Tuple[float, float, float]
     fileheader: FileHeader
     rec_depth_key: str = "GroupWaterDepth"
     segments: List[Tuple[int, int]] = field(default_factory=list)
@@ -105,17 +106,18 @@ class ShotRecord:
         """Array of receiver coordinates for this shot."""
         if self._rec_coords is None:
             hdrs = self.read_headers(
-                keys=["GroupX", "GroupY", self.rec_depth_key]
+                keys=[
+                    "GroupX",
+                    "GroupY",
+                    self.rec_depth_key,
+                    "RecSourceScalar",
+                    "ElevationScalar",
+                ]
             )
-            coords = [
-                (
-                    h.GroupX,
-                    h.GroupY,
-                    getattr(h, self.rec_depth_key),
-                )
-                for h in hdrs
-            ]
-            self._rec_coords = np.asarray(coords, dtype=int)
+            gx = get_header(hdrs, "GroupX")
+            gy = get_header(hdrs, "GroupY")
+            dz = get_header(hdrs, self.rec_depth_key)
+            self._rec_coords = np.column_stack((gx, gy, dz)).astype(np.float32)
         return self._rec_coords
 
 
@@ -404,6 +406,8 @@ def _scan_file(
         "GroupX",
         "GroupY",
         rec_depth_key,
+        "RecSourceScalar",
+        "ElevationScalar",
     ]
     if keys is not None:
         for k in keys:
@@ -436,7 +440,11 @@ def _scan_file(
             trace_keys,
             chunk,
         ):
-            src = (th.SourceX, th.SourceY, getattr(th, depth_key))
+            src = (
+                np.float32(get_header([th], "SourceX")[0]),
+                np.float32(get_header([th], "SourceY")[0]),
+                np.float32(get_header([th], depth_key)[0]),
+            )
 
             rec = records.get(src)
             if rec is None:
