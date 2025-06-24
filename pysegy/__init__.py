@@ -3,7 +3,10 @@
 
 import logging
 
-logger = logging.getLogger(__name__)
+
+logger = logging.getLogger('pysegy')
+stream_handler = logging.StreamHandler()
+logger.addHandler(stream_handler)
 
 from .types import (
     BinaryFileHeader,
