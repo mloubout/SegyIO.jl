@@ -26,22 +26,24 @@ from .types import (
 
 @dataclass
 class ShotRecord:
-    """
-    Information about a single shot location within a SEGY file.
-    """
+    """Information about a single shot location within a SEGY file."""
 
     path: str
-    shot: Tuple[int, int, int]
+    coordinates: Tuple[int, int, int]
+    fileheader: FileHeader
     segments: List[Tuple[int, int]] = field(default_factory=list)
     summary: dict = field(default_factory=dict)
     ns: int = 0
     dt: int = 0
+    _data: Optional[SeisBlock] = field(default=None, init=False, repr=False)
 
     def __str__(self) -> str:
         lines = ["ShotRecord:"]
         lines.append(f"    path: {self.path}")
         lines.append(
-            f"    source: ({self.shot[0]}, {self.shot[1]}, {self.shot[2]})"
+            "    source: ("
+            f"{self.coordinates[0]}, {self.coordinates[1]}, {self.coordinates[2]}"
+            ")"
         )
         lines.append(f"    traces: {sum(c for _, c in self.segments)}")
         lines.append(f"    ns: {self.ns}, dt: {self.dt}")
@@ -52,6 +54,46 @@ class ShotRecord:
         return "\n".join(lines)
 
     __repr__ = __str__
+
+    def read_data(self, keys: Optional[Iterable[str]] = None) -> SeisBlock:
+        """Load all traces for this shot."""
+        headers: List[BinaryTraceHeader] = []
+        data_parts = []
+        for offset, count in self.segments:
+            with open(self.path, "rb") as f:
+                f.seek(offset)
+                h, d = read_traces(
+                    f,
+                    self.fileheader.bfh.ns,
+                    count,
+                    self.fileheader.bfh.DataSampleFormat,
+                    keys,
+                )
+                headers.extend(h)
+                data_parts.append(d)
+        data = np.concatenate(data_parts, axis=0) if data_parts else []
+        return SeisBlock(self.fileheader, headers, data)
+
+    def read_headers(
+        self, keys: Optional[Iterable[str]] = None
+    ) -> List[BinaryTraceHeader]:
+        """Read only the headers for this shot."""
+        headers: List[BinaryTraceHeader] = []
+        ns = self.fileheader.bfh.ns
+        for offset, count in self.segments:
+            with open(self.path, "rb") as f:
+                f.seek(offset)
+                for _ in range(count):
+                    th = read_traceheader(f, keys)
+                    headers.append(th)
+                    f.seek(ns * 4, os.SEEK_CUR)
+        return headers
+
+    @property
+    def data(self) -> SeisBlock:
+        if self._data is None:
+            self._data = self.read_data()
+        return self._data
 
 
 def _parse_header(buf: bytes, keys: Iterable[str]) -> BinaryTraceHeader:
@@ -177,6 +219,7 @@ class SegyScan:
         """
         self.fileheader = fh
         self.records = records
+        self._data: Optional[List[SeisBlock]] = None
 
     def __len__(self) -> int:
         """Return the number of distinct shots."""
@@ -190,7 +233,7 @@ class SegyScan:
     @property
     def shots(self) -> List[Tuple[int, int, int]]:
         """Source coordinates for each shot including depth."""
-        return [r.shot for r in self.records]
+        return [r.coordinates for r in self.records]
 
     @property
     def offsets(self) -> List[int]:
@@ -202,11 +245,22 @@ class SegyScan:
         """Total number of traces for each shot."""
         return [sum(c for _, c in r.segments) for r in self.records]
 
+    def __getitem__(self, idx: int) -> ShotRecord:
+        """Return the ``idx``-th :class:`ShotRecord`."""
+        return self.records[idx]
+
+    @property
+    def data(self) -> List[SeisBlock]:
+        """Load data for all shots on first access."""
+        if self._data is None:
+            self._data = [self.read_data(i) for i in range(len(self.records))]
+        return self._data
+
     def summary(self, idx: int) -> dict:
         """Header summaries for the ``idx``-th shot."""
         return self.records[idx].summary
 
-    def read_shot(
+    def read_data(
         self, idx: int, keys: Optional[Iterable[str]] = None
     ) -> SeisBlock:
         """
@@ -353,7 +407,7 @@ def _scan_file(
 
             rec = records.get(src)
             if rec is None:
-                rec = ShotRecord(path, src, [], {}, ns, fh.bfh.dt)
+                rec = ShotRecord(path, src, fh, [], {}, ns, fh.bfh.dt)
                 records[src] = rec
             _update_summary(rec.summary, th, keys or [])
 
@@ -374,7 +428,7 @@ def _scan_file(
             # Append the final segment for the last shot
             records[previous].segments.append((seg_start, seg_count))
 
-    record_list = sorted(records.values(), key=lambda r: r.shot)
+    record_list = sorted(records.values(), key=lambda r: r.coordinates)
     logger.info("%s found %d shots in %s", thread, len(record_list), path)
     return SegyScan(fh, record_list)
 
@@ -459,7 +513,7 @@ def segy_scan(
     if not records:
         raise FileNotFoundError("No matching SEGY files found")
 
-    records.sort(key=lambda r: r.shot)
+    records.sort(key=lambda r: r.coordinates)
 
     logger.info("Combined scan has %d shots", len(records))
     return SegyScan(fh, records)
