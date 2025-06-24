@@ -3,7 +3,10 @@
 
 import logging
 
-logger = logging.getLogger(__name__)
+
+logger = logging.getLogger('pysegy')
+stream_handler = logging.StreamHandler()
+logger.addHandler(stream_handler)
 
 from .types import (
     BinaryFileHeader,
@@ -24,6 +27,7 @@ from .write import (
     write_block,
     segy_write,
 )
+from .utils import get_header
 
 __all__ = [
     "BinaryFileHeader",
@@ -42,6 +46,7 @@ __all__ = [
     "write_traceheader",
     "write_block",
     "segy_write",
+    "get_header",
 ]
 
 logging.basicConfig(level=logging.INFO)

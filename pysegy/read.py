@@ -12,13 +12,16 @@ from .types import (
     TH_INT32_FIELDS,
 )
 from typing import BinaryIO, Iterable, List, Optional, Tuple
-import asyncio
+import numpy as np
 from concurrent.futures import ThreadPoolExecutor
 
 from . import logger
 
 from .ibm import ibm_to_ieee
 import struct
+
+# Number of traces to read at a time when loading an entire file
+TRACE_CHUNKSIZE = 512
 
 
 def read_fileheader(
@@ -130,10 +133,7 @@ def read_traces(
         ``(headers, data)`` where ``headers`` is a list of
         :class:`BinaryTraceHeader` and ``data`` is ``ns`` x ``ntraces`` array.
     """
-    data: List[List[float]] = [
-        [0.0 for _ in range(ntraces)]
-        for _ in range(ns)
-    ]
+    data: np.ndarray = np.zeros((ns, ntraces), dtype=np.float32)
     headers: List[BinaryTraceHeader] = [
         BinaryTraceHeader() for _ in range(ntraces)
     ]
@@ -173,68 +173,7 @@ def read_traces(
     with ThreadPoolExecutor() as pool:
         for idx, hdr, samples in pool.map(parse_one, range(ntraces)):
             headers[idx] = hdr
-            for j, v in enumerate(samples):
-                data[j][idx] = v
-
-    return headers, data
-
-
-async def read_traces_async(
-    f: BinaryIO,
-    ns: int,
-    ntraces: int,
-    datatype: int,
-    keys: Optional[Iterable[str]] = None,
-    bigendian: bool = True,
-    workers: int = 5,
-) -> Tuple[List[BinaryTraceHeader], List[List[float]]]:
-    """Asynchronous version of :func:`read_traces`."""
-    data: List[List[float]] = [
-        [0.0 for _ in range(ntraces)] for _ in range(ns)
-    ]
-    headers: List[BinaryTraceHeader] = [
-        BinaryTraceHeader() for _ in range(ntraces)
-    ]
-
-    trace_size = 240 + ns * 4
-    raw = f.read(trace_size * ntraces)
-
-    if keys is None:
-        keys = list(TH_BYTE2SAMPLE.keys())
-    key_list = list(keys)
-
-    sem = asyncio.Semaphore(workers)
-
-    async def parse_one(idx: int):
-        offset = idx * trace_size
-        hdr_buf = raw[offset:offset + 240]
-        async with sem:
-            hdr = BinaryTraceHeader()
-            for k in key_list:
-                offset_k = TH_BYTE2SAMPLE[k]
-                size = 4 if k in TH_INT32_FIELDS else 2
-                fmt = ">i" if size == 4 else ">h"
-                if not bigendian:
-                    fmt = "<i" if size == 4 else "<h"
-                val = struct.unpack_from(fmt, hdr_buf, offset_k)[0]
-                setattr(hdr, k, val)
-            hdr.keys_loaded = key_list
-        data_buf = raw[offset + 240:offset + trace_size]
-        if datatype == 1:
-            samples = [
-                ibm_to_ieee(data_buf[j:j + 4]) for j in range(0, ns * 4, 4)
-            ]
-        else:
-            fmt = (">%df" % ns) if bigendian else ("<%df" % ns)
-            samples = struct.unpack(fmt, data_buf)
-        return idx, hdr, samples
-
-    tasks = [asyncio.create_task(parse_one(i)) for i in range(ntraces)]
-    for t in asyncio.as_completed(tasks):
-        idx, hdr, samples = await t
-        headers[idx] = hdr
-        for j, v in enumerate(samples):
-            data[j][idx] = v
+            data[:, idx] = samples
 
     return headers, data
 
@@ -259,11 +198,14 @@ def read_file(
         Additional header fields to load with each trace.
     bigendian : bool, optional
         Set ``True`` for big-endian encoding.
+    workers : int, optional
+        Unused parameter kept for backwards compatibility.
 
     Returns
     -------
     SeisBlock
-        Entire dataset loaded into memory.
+        Entire dataset loaded into memory. The file is read in chunks of
+        ``TRACE_CHUNKSIZE`` traces to limit peak memory usage.
     """
     fh = read_fileheader(f, bigendian=bigendian)
     ns = fh.bfh.ns
@@ -273,11 +215,20 @@ def read_file(
     end = f.tell()
     ntraces = (end - 3600) // trace_size
     f.seek(3600)
-    headers, data = asyncio.run(
-        read_traces_async(
-            f, ns, ntraces, dsf, keys, bigendian, workers
+    headers: List[BinaryTraceHeader] = [BinaryTraceHeader() for _ in range(ntraces)]
+    data: np.ndarray = np.zeros((ns, ntraces), dtype=np.float32)
+
+    idx = 0
+    while idx < ntraces:
+        count = min(TRACE_CHUNKSIZE, ntraces - idx)
+        h, d = read_traces(
+            f, ns, count, dsf, keys, bigendian
         )
-    )
+        for j in range(count):
+            headers[idx + j] = h[j]
+            data[:, idx + j] = d[:, j]
+        idx += count
+
     return SeisBlock(fh, headers, data)
 
 

@@ -396,7 +396,7 @@ def _scan_file(
         Object describing all shots found in ``path``.
     """
     thread = threading.current_thread().name
-    logger.info("%s scanning file %s", thread, path)
+    logger.debug("%s scanning file %s", thread, path)
     trace_keys = [
         "SourceX",
         "SourceY",
@@ -414,7 +414,7 @@ def _scan_file(
 
     with opener(path, "rb") as f:
         fh = read_fileheader(f)
-        logger.info(
+        logger.debug(
             "Header for %s: ns=%d dt=%d", path, fh.bfh.ns, fh.bfh.dt
         )
         ns = fh.bfh.ns
@@ -471,7 +471,7 @@ def _scan_file(
             records[previous].segments.append((seg_start, seg_count))
 
     record_list = sorted(records.values(), key=lambda r: r.coordinates)
-    logger.info("%s found %d shots in %s", thread, len(record_list), path)
+    logger.debug("%s found %d shots in %s", thread, len(record_list), path)
     return SegyScan(fh, record_list)
 
 
@@ -536,7 +536,7 @@ def segy_scan(
             files = fs.glob(f"{directory.rstrip('/')}/{pattern}")
     files.sort()
 
-    logger.info(
+    logger.debug(
         "Scanning %d files in %s with %d threads",
         len(files),
         directory,
@@ -553,8 +553,6 @@ def segy_scan(
         for fut in as_completed(futures):
             scan = fut.result()
             fh = scan.fileheader
-            file_path = futures[fut]
-            logger.info("Completed scan of %s", file_path)
             records.extend(scan.records)
 
     if not records:
@@ -562,7 +560,7 @@ def segy_scan(
 
     records.sort(key=lambda r: r.coordinates)
 
-    logger.info("Combined scan has %d shots", len(records))
+    logger.debug("Combined scan has %d shots", len(records))
     return SegyScan(fh, records)
 
 
@@ -579,11 +577,11 @@ def save_scan(path: str, scan: SegyScan, fs=None) -> None:
     fs : filesystem-like object, optional
         Filesystem providing ``open`` when writing to non-local storage.
     """
-    logger.info("Saving SegyScan to %s", path)
+    logger.debug("Saving SegyScan to %s", path)
     opener = fs.open if fs is not None else open
     with opener(path, "wb") as f:
         cloudpickle.dump(scan, f, protocol=cloudpickle.DEFAULT_PROTOCOL)
-    logger.info("Finished saving %s", path)
+    logger.debug("Finished saving %s", path)
 
 
 def load_scan(path: str, fs=None) -> SegyScan:
@@ -602,9 +600,9 @@ def load_scan(path: str, fs=None) -> SegyScan:
     SegyScan
         Deserialized scan object.
     """
-    logger.info("Loading SegyScan from %s", path)
+    logger.debug("Loading SegyScan from %s", path)
     opener = fs.open if fs is not None else open
     with opener(path, "rb") as f:
         scan = cloudpickle.load(f)
-    logger.info("Loaded SegyScan with %d shots", len(scan.records))
+    logger.debug("Loaded SegyScan with %d shots", len(scan.records))
     return scan

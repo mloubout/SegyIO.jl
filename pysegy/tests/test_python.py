@@ -4,6 +4,7 @@ import gzip
 import urllib.request
 import shutil
 import fsspec
+import numpy as np
 
 import pysegy as seg  # noqa: E402
 from pysegy.ibm import ibm_to_ieee  # noqa: E402
@@ -31,14 +32,14 @@ def test_write_roundtrip(tmp_path):
     for th in headers:
         th.ns = 4
         th.SourceX = 1234
-    data = [[float(i*j) for j in range(2)] for i in range(4)]
+    data = np.array([[float(i*j) for j in range(2)] for i in range(4)])
     block = SeisBlock(fh, headers, data)
     tmp = tmp_path / 'temp.segy'
     seg.segy_write(str(tmp), block)
     out = seg.segy_read(str(tmp))
     assert out.fileheader.bfh.ns == 4
     assert out.traceheaders[0].SourceX == 1234
-    assert out.data == data
+    assert np.all(out.data == data)
 
 
 def test_ibm_conversion():
@@ -67,13 +68,13 @@ def test_write_read_block_bytesio():
     fh.bfh.DataSampleFormat = 5
     headers = [BinaryTraceHeader() for _ in range(1)]
     headers[0].ns = 2
-    data = [[1.0], [2.0]]
+    data = np.array([[1.0], [2.0]])
     block = SeisBlock(fh, headers, data)
     bio = BytesIO()
     seg.write.write_block(bio, block)
     bio.seek(0)
     out = seg.read.read_file(bio)
-    assert out.data == data
+    assert np.all(out.data == data)
 
 
 def test_read_with_filesystem():
@@ -90,7 +91,7 @@ def test_write_with_filesystem(tmp_path):
     hdr = BinaryTraceHeader()
     hdr.ns = 2
     hdr.SourceX = 111
-    data = [[1.0], [2.0]]
+    data = np.array([[1.0], [2.0]])
     block = SeisBlock(fh, [hdr], data)
     dest = tmp_path / "fsout.segy"
     seg.segy_write(str(dest), block, fs=fs)
@@ -212,7 +213,7 @@ def test_scan_unsorted_traces(tmp_path):
     hdr3.GroupX = 3
 
     headers = [hdr1, hdr2, hdr3]
-    data = [[0.0, 0.0, 0.0]]
+    data = np.zeros((1, 3), dtype=np.float32)
     block = SeisBlock(fh, headers, data)
     tmp = tmp_path / "unsorted.segy"
     with open(tmp, "wb") as f:
@@ -263,3 +264,39 @@ def test_rec_coordinates():
     coords = rec.rec_coordinates
     assert coords.shape[0] == scan.counts[0]
     assert tuple(coords[0]) == (100, 0, 0)
+
+
+def test_get_header_scaling():
+    fh = FileHeader()
+    fh.bfh.ns = 1
+    fh.bfh.DataSampleFormat = 5
+
+    h1 = BinaryTraceHeader()
+    h1.ns = 1
+    h1.SourceX = 10
+    h1.RecSourceScalar = 2
+
+    h2 = BinaryTraceHeader()
+    h2.ns = 1
+    h2.SourceX = 20
+    h2.RecSourceScalar = -2
+
+    h3 = BinaryTraceHeader()
+    h3.ns = 1
+    h3.SourceX = 5
+    h3.RecSourceScalar = 1
+
+    h4 = BinaryTraceHeader()
+    h4.ns = 1
+    h4.SourceX = 7
+    h4.RecSourceScalar = 0
+
+    headers = [h1, h2, h3, h4]
+    block = SeisBlock(fh, headers, np.zeros((1, 4), dtype=np.float32))
+
+    vals = seg.get_header(block, "SourceX")
+    assert vals[:2] == [20, 10]
+    assert vals[2:] == [5, 7]
+
+    raw = seg.get_header(block, "SourceX", scale=False)
+    assert raw == [10, 20, 5, 7]
