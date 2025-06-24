@@ -16,7 +16,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from . import logger
 
-from .ibm import ibm_to_ieee, ibm_to_ieee_array
+from .ibm import ibm_to_ieee_array
 import struct
 
 # Number of traces to read at a time when loading an entire file
