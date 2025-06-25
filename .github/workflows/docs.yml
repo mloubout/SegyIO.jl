@@ -17,6 +17,8 @@ jobs:
           python-version: '3.11'
       - name: Install python deps
         run: pip install quartodoc
+      - name: Install package
+        run: pip install -e .
       - name: Build API docs
         run: quartodoc build
         working-directory: docs
