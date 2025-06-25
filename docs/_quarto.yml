@@ -16,7 +16,7 @@ format:
     theme: cosmo
 
 quartodoc:
-  package: SegyIO
+  package: pysegy
   dir: reference
   sections:
     - contents: [SegyIO]
