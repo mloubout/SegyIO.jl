@@ -14,8 +14,6 @@ from typing import BinaryIO, Iterable, List, Optional, Tuple
 import numpy as np
 from concurrent.futures import ThreadPoolExecutor
 
-from . import logger
-
 from .ibm import ibm_to_ieee_array
 import struct
 
@@ -255,16 +253,13 @@ def segy_read(
     SeisBlock
         Loaded dataset.
     """
-    logger.info("Reading SEGY file %s", path)
+    print(f"Reading SEGY file {path}")
 
     opener = fs.open if fs is not None else open
 
     with opener(path, "rb") as f:
         block = read_file(f, keys=keys, workers=workers)
-    logger.info(
-        "Loaded header ns=%d dt=%d from %s",
-        block.fileheader.bfh.ns,
-        block.fileheader.bfh.dt,
-        path,
+    print(
+        f"Loaded header ns={block.fileheader.bfh.ns} dt={block.fileheader.bfh.dt} from {path}"
     )
     return block

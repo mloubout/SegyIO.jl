@@ -13,7 +13,6 @@ import struct
 import numpy as np
 import cloudpickle
 
-from . import logger
 from .read import read_fileheader, read_traceheader, read_traces
 from .utils import get_header
 from .types import (
@@ -399,7 +398,7 @@ def _scan_file(
         Object describing all shots found in ``path``.
     """
     thread = threading.current_thread().name
-    logger.debug("%s scanning file %s", thread, path)
+    print(f"{thread} scanning file {path}")
     trace_keys = [
         "SourceX",
         "SourceY",
@@ -419,9 +418,7 @@ def _scan_file(
 
     with opener(path, "rb") as f:
         fh = read_fileheader(f)
-        logger.debug(
-            "Header for %s: ns=%d dt=%d", path, fh.bfh.ns, fh.bfh.dt
-        )
+        print(f"Header for {path}: ns={fh.bfh.ns} dt={fh.bfh.dt}")
         ns = fh.bfh.ns
         f.seek(0, os.SEEK_END)
         total = (f.tell() - 3600) // (240 + ns * 4)
@@ -480,7 +477,7 @@ def _scan_file(
             records[previous].segments.append((seg_start, seg_count))
 
     record_list = sorted(records.values(), key=lambda r: r.coordinates)
-    logger.debug("%s found %d shots in %s", thread, len(record_list), path)
+    print(f"{thread} found {len(record_list)} shots in {path}")
     return SegyScan(fh, record_list)
 
 
@@ -545,11 +542,8 @@ def segy_scan(
             files = fs.glob(f"{directory.rstrip('/')}/{pattern}")
     files.sort()
 
-    logger.debug(
-        "Scanning %d files in %s with %d threads",
-        len(files),
-        directory,
-        threads,
+    print(
+        f"Scanning {len(files)} files in {directory} with {threads} threads"
     )
     records: List[ShotRecord] = []
     with ThreadPoolExecutor(max_workers=threads) as pool:
@@ -569,7 +563,7 @@ def segy_scan(
 
     records.sort(key=lambda r: r.coordinates)
 
-    logger.debug("Combined scan has %d shots", len(records))
+    print(f"Combined scan has {len(records)} shots")
     return SegyScan(fh, records)
 
 
@@ -586,11 +580,11 @@ def save_scan(path: str, scan: SegyScan, fs=None) -> None:
     fs : filesystem-like object, optional
         Filesystem providing ``open`` when writing to non-local storage.
     """
-    logger.debug("Saving SegyScan to %s", path)
+    print(f"Saving SegyScan to {path}")
     opener = fs.open if fs is not None else open
     with opener(path, "wb") as f:
         cloudpickle.dump(scan, f, protocol=cloudpickle.DEFAULT_PROTOCOL)
-    logger.debug("Finished saving %s", path)
+    print(f"Finished saving {path}")
 
 
 def load_scan(path: str, fs=None) -> SegyScan:
@@ -609,9 +603,9 @@ def load_scan(path: str, fs=None) -> SegyScan:
     SegyScan
         Deserialized scan object.
     """
-    logger.debug("Loading SegyScan from %s", path)
+    print(f"Loading SegyScan from {path}")
     opener = fs.open if fs is not None else open
     with opener(path, "rb") as f:
         scan = cloudpickle.load(f)
-    logger.debug("Loaded SegyScan with %d shots", len(scan.records))
+    print(f"Loaded SegyScan with {len(scan.records)} shots")
     return scan
