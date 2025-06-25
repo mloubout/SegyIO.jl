@@ -1,12 +1,7 @@
 """Minimal Python port of SegyIO.jl."""
 # flake8: noqa
 
-import logging
 
-
-logger = logging.getLogger('pysegy')
-stream_handler = logging.StreamHandler()
-logger.addHandler(stream_handler)
 
 from .types import (
     BinaryFileHeader,
@@ -49,4 +44,3 @@ __all__ = [
     "get_header",
 ]
 
-logging.basicConfig(level=logging.ERROR)
