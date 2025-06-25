@@ -1,7 +1,5 @@
 """Minimal Python port of SegyIO.jl."""
-# flake8: noqa
-
-
+from importlib.metadata import version, PackageNotFoundError
 
 from .types import (
     BinaryFileHeader,
@@ -51,3 +49,9 @@ __all__ = [
     "get_header",
 ]
 
+
+try:
+    __version__ = version("pysegy")
+except PackageNotFoundError:
+    # devito is not installed
+    __version__ = '0+untagged'
