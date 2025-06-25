@@ -260,6 +260,7 @@ def segy_read(
     with opener(path, "rb") as f:
         block = read_file(f, keys=keys, workers=workers)
     print(
-        f"Loaded header ns={block.fileheader.bfh.ns} dt={block.fileheader.bfh.dt} from {path}"
+        f"Loaded header ns={block.fileheader.bfh.ns} "
+        f"dt={block.fileheader.bfh.dt} from {path}"
     )
     return block
