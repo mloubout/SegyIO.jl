@@ -1,0 +1,22 @@
+project:
+  type: website
+  output-dir: _site
+
+website:
+  title: "SegyIO.jl"
+  navbar:
+    left:
+      - text: "Home"
+        href: index.qmd
+      - text: "API"
+        href: reference/index.qmd
+
+format:
+  html:
+    theme: cosmo
+
+quartodoc:
+  package: SegyIO
+  dir: reference
+  sections:
+    - contents: [SegyIO]
