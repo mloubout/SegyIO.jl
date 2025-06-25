@@ -5,3 +5,10 @@
 | | |
 | --- | --- |
 | [pysegy](pysegy.qmd#pysegy) | Minimal Python port of SegyIO.jl. |
+| [segy_scan](pysegy.qmd#segy_scan) | Scan one or more SEGY files |
+| [segy_read](pysegy.qmd#segy_read) | Read an entire SEGY file |
+| [segy_write](pysegy.qmd#segy_write) | Write a SEGY file |
+| [get_header](pysegy.qmd#get_header) | Extract header values |
+| [ShotRecord](pysegy.qmd#ShotRecord) | Metadata for a single shot |
+| [SegyScan](pysegy.qmd#SegyScan) | Collection of ShotRecord objects |
+| [SeisBlock](pysegy.qmd#SeisBlock) | In-memory data block |
