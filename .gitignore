@@ -1,12 +1,7 @@
-*.jl.cov
-*.jl.*.cov
-*.jl.mem
 __pycache__/
 pysegy/__pycache__/
 pysegy/tests/__pycache__/
 .coverage
 coverage.xml
 htmlcov/
-Manifest.toml
 data/test_write.segy
-julia.tar.gz
