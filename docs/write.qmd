@@ -1,0 +1,27 @@
+---
+title: "Write"
+---
+
+Writing SEGY files mirrors the reading workflow.
+
+```{python}
+#| eval: false
+import numpy as np
+import pysegy as seg
+
+fh = seg.FileHeader()
+fh.bfh.ns = 2
+fh.bfh.DataSampleFormat = 5
+
+# two traces with minimal headers
+hdr = seg.BinaryTraceHeader()
+hdr.ns = 2
+
+data = np.array([[1.0], [2.0]], dtype=np.float32)
+block = seg.SeisBlock(fh, [hdr], data)
+
+seg.segy_write("out.segy", block)
+```
+
+The :func:`pysegy.segy_write` helper takes a :class:`pysegy.SeisBlock` and
+writes a complete SEGY file to disk.
