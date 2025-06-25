@@ -1,0 +1,20 @@
+---
+title: "Scan"
+---
+
+Scanning allows inspecting large surveys without loading everything in
+memory.
+
+```{python}
+#| eval: false
+import pysegy as seg
+
+# scan all matching files in the directory
+scan = seg.segy_scan("data", "overthrust_2D_shot_*.segy")
+
+print(len(scan.shots))  # number of shot records
+print(scan.counts[0])   # traces in the first shot
+```
+
+The :func:`pysegy.segy_scan` function summarises multiple files and
+returns a :class:`pysegy.SegyScan` that can lazily read data for each shot.

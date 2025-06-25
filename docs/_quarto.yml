@@ -6,8 +6,12 @@ website:
   title: "pysegy"
   navbar:
     left:
-      - text: "Home"
-        href: index.qmd
+      - text: "Read"
+        href: read.qmd
+      - text: "Write"
+        href: write.qmd
+      - text: "Scan"
+        href: scan.qmd
       - text: "API"
         href: reference/index.qmd
 
@@ -18,5 +22,8 @@ format:
 quartodoc:
   package: pysegy
   dir: reference
+  source_dir: ..
   sections:
-    - contents: [pysegy]
+    - contents:
+        - name: pysegy
+          package: null

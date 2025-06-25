@@ -1,0 +1,5 @@
+# pysegy { #pysegy }
+
+``
+
+Minimal Python port of SegyIO.jl.
