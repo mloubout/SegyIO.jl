@@ -27,6 +27,12 @@ Install the project in editable mode from the repository root:
 python -m pip install -e .
 ```
 
+Or to install the latest pypi release
+
+```
+pip install pysegy
+```
+
 ## Testing
 
 Run the unit tests with `pytest`:
