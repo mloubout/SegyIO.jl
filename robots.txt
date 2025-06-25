@@ -1,0 +1,1 @@
+Sitemap: https://mloubout.github.io/pysegy/sitemap.xml
