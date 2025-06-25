@@ -15,6 +15,8 @@ website:
         href: write.qmd
       - text: "Scan"
         href: scan.qmd
+      - text: "Tutorial"
+        href: ../notebooks/bp_scan_tutorial.ipynb
       - text: "API"
         href: reference/index.qmd
 
