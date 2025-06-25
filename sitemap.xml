@@ -2,70 +2,74 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://mloubout.github.io/pysegy/write.html</loc>
-    <lastmod>2025-06-25T14:43:54.000Z</lastmod>
+    <lastmod>2025-06-25T14:49:26.274Z</lastmod>
   </url>
   <url>
     <loc>https://mloubout.github.io/pysegy/reference/BinaryFileHeader.html</loc>
-    <lastmod>2025-06-25T14:44:36.203Z</lastmod>
+    <lastmod>2025-06-25T14:50:05.131Z</lastmod>
   </url>
   <url>
     <loc>https://mloubout.github.io/pysegy/reference/segy_read.html</loc>
-    <lastmod>2025-06-25T14:44:36.189Z</lastmod>
+    <lastmod>2025-06-25T14:50:05.117Z</lastmod>
   </url>
   <url>
     <loc>https://mloubout.github.io/pysegy/reference/index.html</loc>
-    <lastmod>2025-06-25T14:44:36.137Z</lastmod>
+    <lastmod>2025-06-25T14:50:05.065Z</lastmod>
   </url>
   <url>
     <loc>https://mloubout.github.io/pysegy/reference/segy_scan.html</loc>
-    <lastmod>2025-06-25T14:44:36.185Z</lastmod>
+    <lastmod>2025-06-25T14:50:05.112Z</lastmod>
   </url>
   <url>
     <loc>https://mloubout.github.io/pysegy/reference/pysegy.html</loc>
-    <lastmod>2025-06-25T14:43:54.000Z</lastmod>
+    <lastmod>2025-06-25T14:49:26.274Z</lastmod>
   </url>
   <url>
     <loc>https://mloubout.github.io/pysegy/reference/BinaryTraceHeader.html</loc>
-    <lastmod>2025-06-25T14:44:36.205Z</lastmod>
+    <lastmod>2025-06-25T14:50:05.133Z</lastmod>
   </url>
   <url>
     <loc>https://mloubout.github.io/pysegy/reference/segy_write.html</loc>
-    <lastmod>2025-06-25T14:44:36.192Z</lastmod>
+    <lastmod>2025-06-25T14:50:05.120Z</lastmod>
   </url>
   <url>
     <loc>https://mloubout.github.io/pysegy/read.html</loc>
-    <lastmod>2025-06-25T14:43:53.999Z</lastmod>
+    <lastmod>2025-06-25T14:49:26.274Z</lastmod>
+  </url>
+  <url>
+    <loc>https://mloubout.github.io/pysegy/bp_scan_tutorial.html</loc>
+    <lastmod>2025-06-25T14:50:04.190Z</lastmod>
   </url>
   <url>
     <loc>https://mloubout.github.io/pysegy/scan.html</loc>
-    <lastmod>2025-06-25T14:43:54.000Z</lastmod>
+    <lastmod>2025-06-25T14:49:26.274Z</lastmod>
   </url>
   <url>
     <loc>https://mloubout.github.io/pysegy/reference/SeisBlock.html</loc>
-    <lastmod>2025-06-25T14:44:36.178Z</lastmod>
+    <lastmod>2025-06-25T14:50:05.106Z</lastmod>
   </url>
   <url>
     <loc>https://mloubout.github.io/pysegy/reference/save_scan.html</loc>
-    <lastmod>2025-06-25T14:44:36.196Z</lastmod>
+    <lastmod>2025-06-25T14:50:05.124Z</lastmod>
   </url>
   <url>
     <loc>https://mloubout.github.io/pysegy/reference/ShotRecord.html</loc>
-    <lastmod>2025-06-25T14:44:36.157Z</lastmod>
+    <lastmod>2025-06-25T14:50:05.085Z</lastmod>
   </url>
   <url>
     <loc>https://mloubout.github.io/pysegy/reference/FileHeader.html</loc>
-    <lastmod>2025-06-25T14:44:36.208Z</lastmod>
+    <lastmod>2025-06-25T14:50:05.135Z</lastmod>
   </url>
   <url>
     <loc>https://mloubout.github.io/pysegy/reference/SegyScan.html</loc>
-    <lastmod>2025-06-25T14:44:36.175Z</lastmod>
+    <lastmod>2025-06-25T14:50:05.103Z</lastmod>
   </url>
   <url>
     <loc>https://mloubout.github.io/pysegy/reference/load_scan.html</loc>
-    <lastmod>2025-06-25T14:44:36.200Z</lastmod>
+    <lastmod>2025-06-25T14:50:05.128Z</lastmod>
   </url>
   <url>
     <loc>https://mloubout.github.io/pysegy/index.html</loc>
-    <lastmod>2025-06-25T14:43:53.999Z</lastmod>
+    <lastmod>2025-06-25T14:49:26.274Z</lastmod>
   </url>
 </urlset>
