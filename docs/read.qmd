@@ -5,10 +5,11 @@ title: "Read"
 This page shows how to read SEGY data using **pysegy**.
 
 ```{python}
+from pathlib import Path
 import pysegy as seg
 
-# path to a SEGY file
-path = "data/overthrust_2D_shot_1_20.segy"
+# path to a SEGY file shipped with the repository
+path = Path(__file__).resolve().parents[1] / "data" / "overthrust_2D_shot_1_20.segy"
 
 # load the file into memory
 block = seg.segy_read(path)
