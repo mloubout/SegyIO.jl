@@ -3,6 +3,7 @@
 [![CI](https://github.com/mloubout/pysegy/actions/workflows/main.yml/badge.svg)](https://github.com/mloubout/pysegy/actions/workflows/main.yml)
 [![Docs](https://github.com/mloubout/pysegy/actions/workflows/docs.yml/badge.svg)](https://mloubout.github.io/pysegy)
 [![codecov](https://codecov.io/gh/mloubout/pysegy/branch/master/graph/badge.svg)](https://codecov.io/gh/mloubout/pysegy)
+[![PyPI version](https://badge.fury.io/py/pysegy.svg?icon=si%3Apython)](https://badge.fury.io/py/pysegy)
 
 `pysegy` is a minimal Python library for working with SEGY Rev 1 data.  The
 project provides helpers to read and write files as well as utilities to scan
