@@ -49,4 +49,4 @@ __all__ = [
     "get_header",
 ]
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.ERROR)
