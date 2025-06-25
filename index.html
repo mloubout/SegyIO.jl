@@ -302,6 +302,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span class="menu-text">Scan</span></a>
   </li>  
   <li class="nav-item">
+    <a class="nav-link" href="./../notebooks/bp_scan_tutorial.ipynb"> 
+<span class="menu-text">Tutorial</span></a>
+  </li>  
+  <li class="nav-item">
     <a class="nav-link" href="./reference/index.html"> 
 <span class="menu-text">API</span></a>
   </li>  
@@ -324,8 +328,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <ul>
   <li><a href="#pysegy" id="toc-pysegy" class="nav-link active" data-scroll-target="#pysegy">pysegy</a>
   <ul class="collapse">
+  <li><a href="#capabilities" id="toc-capabilities" class="nav-link" data-scroll-target="#capabilities">Capabilities</a></li>
   <li><a href="#installation" id="toc-installation" class="nav-link" data-scroll-target="#installation">Installation</a></li>
   <li><a href="#testing" id="toc-testing" class="nav-link" data-scroll-target="#testing">Testing</a></li>
+  <li><a href="#inspiration" id="toc-inspiration" class="nav-link" data-scroll-target="#inspiration">Inspiration</a></li>
   </ul></li>
   </ul>
 <div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="index.ipynb" download="index.ipynb"><i class="bi bi-journal-code"></i>Jupyter</a></li></ul></div></nav>
@@ -356,7 +362,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="pysegy" class="level1">
 <h1>pysegy</h1>
 <p><a href="https://github.com/mloubout/pysegy/actions/workflows/main.yml"><img src="https://github.com/mloubout/pysegy/actions/workflows/main.yml/badge.svg" class="img-fluid" alt="CI"></a> <a href="https://mloubout.github.io/pysegy"><img src="https://github.com/mloubout/pysegy/actions/workflows/docs.yml/badge.svg" class="img-fluid" alt="Docs"></a> <a href="https://codecov.io/gh/mloubout/pysegy"><img src="https://codecov.io/gh/mloubout/pysegy/branch/master/graph/badge.svg" class="img-fluid" alt="codecov"></a></p>
-<p><code>pysegy</code> is a minimal Python library for reading and writing SEGY Rev 1 files. The package focuses on simplicity and provides helpers to parse headers and traces from local files.</p>
+<p><code>pysegy</code> is a minimal Python library for working with SEGY Rev 1 data. The project provides helpers to read and write files as well as utilities to scan large surveys without loading every trace in memory.</p>
+<section id="capabilities" class="level2">
+<h2 class="anchored" data-anchor-id="capabilities">Capabilities</h2>
+<ul>
+<li>Read complete SEGY files with <code>segy_read</code> and access both binary and trace headers.</li>
+<li>Write new data sets using <code>segy_write</code> from NumPy arrays.</li>
+<li>Lazily inspect large archives via <code>segy_scan</code> and the <code>SegyScan</code> object.</li>
+<li>Retrieve individual header fields with automatic scaling through <code>get_header</code>.</li>
+<li>Compatible with any <code>fsspec</code> filesystem for local or remote storage.</li>
+</ul>
+</section>
 <section id="installation" class="level2">
 <h2 class="anchored" data-anchor-id="installation">Installation</h2>
 <p>Install the project in editable mode from the repository root:</p>
@@ -367,6 +383,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>Run the unit tests with <code>pytest</code>:</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pytest</span> <span class="at">-vs</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>The tests run automatically on GitHub Actions with coverage reports uploaded to Codecov.</p>
+</section>
+<section id="inspiration" class="level2">
+<h2 class="anchored" data-anchor-id="inspiration">Inspiration</h2>
+<p>This project started as a lightweight port of the Julia package <a href="https://github.com/slimgroup/SegyIO.jl">SegyIO.jl</a>. The goal is to provide a similar user experience for Python while keeping the code base small and easy to understand.</p>
 
 
 </section>
