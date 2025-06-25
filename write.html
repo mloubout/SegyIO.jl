@@ -174,7 +174,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 <p>Writing SEGY files mirrors the reading workflow.</p>
-<div id="21e1fb1b" class="cell" data-execution_count="1">
+<div id="279409b2" class="cell" data-execution_count="1">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pysegy <span class="im">as</span> seg</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -190,8 +190,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>block <span class="op">=</span> seg.SeisBlock(fh, [hdr], data)</span>
 <span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>seg.segy_write(<span class="st">"out.segy"</span>, block)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Writing SEGY file out.segy
+Finished writing out.segy</code></pre>
 </div>
-<p>The :func:<code>pysegy.segy_write</code> helper takes a :class:<code>pysegy.SeisBlock</code> and writes a complete SEGY file to disk.</p>
+</div>
+<p>The <a href="./reference/pysegy.html#segy_write">pysegy.segy_write</a> helper takes a <a href="./reference/pysegy.html#SeisBlock">pysegy.SeisBlock</a> and writes a complete SEGY file to disk.</p>
 
 
 

@@ -4,7 +4,7 @@
     "href": "write.html",
     "title": "Write",
     "section": "",
-    "text": "Writing SEGY files mirrors the reading workflow.\n\nimport numpy as np\nimport pysegy as seg\n\nfh = seg.FileHeader()\nfh.bfh.ns = 2\nfh.bfh.DataSampleFormat = 5\n\n# two traces with minimal headers\nhdr = seg.BinaryTraceHeader()\nhdr.ns = 2\n\ndata = np.array([[1.0], [2.0]], dtype=np.float32)\nblock = seg.SeisBlock(fh, [hdr], data)\n\nseg.segy_write(\"out.segy\", block)\n\nThe :func:pysegy.segy_write helper takes a :class:pysegy.SeisBlock and writes a complete SEGY file to disk."
+    "text": "Writing SEGY files mirrors the reading workflow.\n\nimport numpy as np\nimport pysegy as seg\n\nfh = seg.FileHeader()\nfh.bfh.ns = 2\nfh.bfh.DataSampleFormat = 5\n\n# two traces with minimal headers\nhdr = seg.BinaryTraceHeader()\nhdr.ns = 2\n\ndata = np.array([[1.0], [2.0]], dtype=np.float32)\nblock = seg.SeisBlock(fh, [hdr], data)\n\nseg.segy_write(\"out.segy\", block)\n\nWriting SEGY file out.segy\nFinished writing out.segy\n\n\nThe pysegy.segy_write helper takes a pysegy.SeisBlock and writes a complete SEGY file to disk."
   },
   {
     "objectID": "reference/index.html",
@@ -18,14 +18,14 @@
     "href": "scan.html",
     "title": "Scan",
     "section": "",
-    "text": "Scanning allows inspecting large surveys without loading everything in memory.\n\nimport pysegy as seg\n\n# scan all matching files in the directory\nscan = seg.segy_scan(\"data\", \"overthrust_2D_shot_*.segy\")\n\nprint(len(scan.shots))  # number of shot records\nprint(scan.counts[0])   # traces in the first shot\n\nThe :func:pysegy.segy_scan function summarises multiple files and returns a :class:pysegy.SegyScan that can lazily read data for each shot."
+    "text": "Scanning allows inspecting large surveys without loading everything in memory.\n\nimport pysegy as seg\n\n# scan all matching files in the repository data directory\ndata_dir = \"../data\"\nscan = seg.segy_scan(data_dir, \"overthrust_2D_shot_*.segy\")\n\nprint(len(scan.shots))  # number of shot records\nprint(scan.counts[0])   # traces in the first shot\n\nScanning 5 files in ../data with 4 threads\nThreadPoolExecutor-0_0 scanning file ../data/overthrust_2D_shot_1_20.segy\nHeader for ../data/overthrust_2D_shot_1_20.segy: ns=751 dt=4000\nThreadPoolExecutor-0_1 scanning file ../data/overthrust_2D_shot_21_40.segy\nThreadPoolExecutor-0_2 scanning file ../data/overthrust_2D_shot_41_60.segy\nHeader for ../data/overthrust_2D_shot_21_40.segy: ns=751 dt=4000\nThreadPoolExecutor-0_3 scanning file ../data/overthrust_2D_shot_61_80.segy\nHeader for ../data/overthrust_2D_shot_41_60.segy: ns=751 dt=4000\nHeader for ../data/overthrust_2D_shot_61_80.segy: ns=751 dt=4000\nThreadPoolExecutor-0_0 found 20 shots in ../data/overthrust_2D_shot_1_20.segy\nThreadPoolExecutor-0_0 scanning file ../data/overthrust_2D_shot_81_97.segy\nThreadPoolExecutor-0_3 found 20 shots in ../data/overthrust_2D_shot_61_80.segy\nThreadPoolExecutor-0_1 found 20 shots in ../data/overthrust_2D_shot_21_40.segy\nHeader for ../data/overthrust_2D_shot_81_97.segy: ns=751 dt=4000\nThreadPoolExecutor-0_2 found 20 shots in ../data/overthrust_2D_shot_41_60.segy\nThreadPoolExecutor-0_0 found 17 shots in ../data/overthrust_2D_shot_81_97.segy\nCombined scan has 97 shots\n97\n127\n\n\nThe pysegy.segy_scan function summarises multiple files and returns a pysegy.SegyScan that can lazily read data for each shot."
   },
   {
     "objectID": "read.html",
     "href": "read.html",
     "title": "Read",
     "section": "",
-    "text": "This page shows how to read SEGY data using pysegy.\n\nimport pysegy as seg\n\n# path to a SEGY file\npath = \"data/overthrust_2D_shot_1_20.segy\"\n\n# load the file into memory\nblock = seg.segy_read(path)\n\n# file header information\nprint(block.fileheader.bfh.ns)\n\nUse :func:pysegy.segy_read to read an entire file in one call. The returned :class:pysegy.SeisBlock contains the file header, trace headers and data array."
+    "text": "This page shows how to read SEGY data using pysegy.\n\nimport pysegy as seg\n\n# path to a SEGY file shipped with the repository\npath = \"../data/overthrust_2D_shot_1_20.segy\"\n\n# load the file into memory\nblock = seg.segy_read(path)\n\n# file header information\nprint(block.fileheader.bfh.ns)\n\nReading SEGY file ../data/overthrust_2D_shot_1_20.segy\nLoaded header ns=751 dt=4000 from ../data/overthrust_2D_shot_1_20.segy\n751\n\n\nUse pysegy.segy_read to read an entire file in one call. The returned pysegy.SeisBlock contains the file header, trace headers and data array."
   },
   {
     "objectID": "reference/pysegy.html",
