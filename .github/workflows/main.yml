@@ -1,51 +1,13 @@
-name: CI-tests
+name: CI
 
 on:
-  # Trigger the workflow on push to master or pull request
-  # to be merged in master
   push:
-    branches:
-      - master
+    branches: [master]
   pull_request:
-    branches:
-      - master
+    branches: [master]
 
 jobs:
-  test:
-    name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }}
-    runs-on: ${{ matrix.os }}
-
-    strategy:
-      fail-fast: false
-
-      matrix:
-        version: ['1', 'lts']
-        os: [ubuntu-latest, macos-latest]
-
-    steps:
-      - name: Checkout SegyIO
-        uses: actions/checkout@v2
-
-      - name: Setup julia
-        uses: julia-actions/setup-julia@v2
-        with:
-          version: ${{ matrix.version }}
-          arch: x64
-
-      - name: Run tests
-        uses: julia-actions/julia-runtest@latest
-        with:
-          annotate: true
-
-      - uses: julia-actions/julia-processcoverage@v1
-
-      - uses: codecov/codecov-action@v4
-        with:
-          file: lcov.info
-          token: ${{ secrets.CODECOV_TOKEN }}
-
-  python-tests:
-    name: Python tests
+  tests:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2

@@ -1,21 +1,21 @@
-# SegyIO.jl
+# pysegy
 
-SegyIO is a Julia package for reading and writing SEGY Rev 1 files. In addition to providing tools for reading/writing entire files, SegyIO provides a parallel scanner that reduces any number of files into a single object with direct out-of-core access to the underlying data. 
+`pysegy` is a minimal Python library for reading and writing SEGY Rev 1 files. The package focuses on simplicity and provides helpers to parse headers and traces from local files.
 
-[![Build Status](https://github.com/slimgroup/SegyIO.jl/workflows/CI-tests/badge.svg)](https://github.com/slimgroup/SegyIO.jl/actions?query=workflow%3ACI-tests)
+## Installation
 
-A video demonstrating the package's capabilities [has been made available here.](https://www.youtube.com/watch?v=tx530QOPeZo&feature=youtu.be)
+Install the project in editable mode from the repository root:
 
-## INSTALLATION
-
-SegyIO is a registered package and can be installed directly from the julia package manager (`]` in the julia REPL) :
-
-```
- add SegyIO
+```bash
+python -m pip install -e .
 ```
 
-## Extension
+## Testing
 
-SegyIO is implemented for POSIX systems. For Cloud storage, use [CloudSegyIO.jl](https://github.com/slimgroup/CloudSegyIO.jl), the Cloud storage extension of SegyIO.
+Run the unit tests with `pytest`:
 
-A minimal Python implementation of the core reader and writer is available in the `pysegy/` directory. Tests for this version run on GitHub Actions with coverage reporting via Codecov.
+```bash
+pytest -vs
+```
+
+The tests run automatically on GitHub Actions with coverage reports uploaded to Codecov.
