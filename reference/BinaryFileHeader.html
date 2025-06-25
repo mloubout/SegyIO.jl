@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>index – pysegy</title>
+<title>binaryfileheader – pysegy</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -19,6 +19,41 @@ ul.task-list li input[type="checkbox"] {
   width: 0.8em;
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
 </style>
 
@@ -282,7 +317,7 @@ ul.task-list li input[type="checkbox"] {
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../reference/index.html">Function reference</a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../reference/ShotRecord.html">pysegy</a></li><li class="breadcrumb-item"><a href="../reference/BinaryFileHeader.html">BinaryFileHeader</a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
     </div>
@@ -296,7 +331,7 @@ ul.task-list li input[type="checkbox"] {
     <ul class="list-unstyled mt-1">
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../reference/index.html" class="sidebar-item-text sidebar-link active">
+  <a href="../reference/index.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Function reference</span></a>
   </div>
 </li>
@@ -359,7 +394,7 @@ ul.task-list li input[type="checkbox"] {
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../reference/BinaryFileHeader.html" class="sidebar-item-text sidebar-link">
+  <a href="../reference/BinaryFileHeader.html" class="sidebar-item-text sidebar-link active">
  <span class="menu-text">BinaryFileHeader</span></a>
   </div>
 </li>
@@ -387,75 +422,26 @@ ul.task-list li input[type="checkbox"] {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#function-reference" id="toc-function-reference" class="nav-link active" data-scroll-target="#function-reference">Function reference</a>
-  <ul class="collapse">
-  <li><a href="#pysegy" id="toc-pysegy" class="nav-link" data-scroll-target="#pysegy">pysegy</a></li>
-  </ul></li>
+  <li><a href="#pysegy.BinaryFileHeader" id="toc-pysegy.BinaryFileHeader" class="nav-link active" data-scroll-target="#pysegy.BinaryFileHeader">BinaryFileHeader</a></li>
   </ul>
-<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="index.ipynb" download="index.ipynb"><i class="bi bi-journal-code"></i>Jupyter</a></li></ul></div></nav>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="BinaryFileHeader.ipynb" download="BinaryFileHeader.ipynb"><i class="bi bi-journal-code"></i>Jupyter</a></li></ul></div></nav>
     </div>
 <!-- main -->
-<main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"></header>
+<main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../reference/ShotRecord.html">pysegy</a></li><li class="breadcrumb-item"><a href="../reference/BinaryFileHeader.html">BinaryFileHeader</a></li></ol></nav></header>
 
 
 
 
 
-<section id="function-reference" class="level1 doc doc-index">
-<h1 class="doc doc-index">Function reference</h1>
-<section id="pysegy" class="level2">
-<h2 class="anchored" data-anchor-id="pysegy">pysegy</h2>
-<table class="caption-top table">
-<tbody>
-<tr class="odd">
-<td><a href="../reference/ShotRecord.html#pysegy.ShotRecord">ShotRecord</a></td>
-<td>Information about a single shot location within a SEGY file.</td>
-</tr>
-<tr class="even">
-<td><a href="../reference/SegyScan.html#pysegy.SegyScan">SegyScan</a></td>
-<td>Representation of SEGY data grouped by shot.</td>
-</tr>
-<tr class="odd">
-<td><a href="../reference/SeisBlock.html#pysegy.SeisBlock">SeisBlock</a></td>
-<td>In-memory representation of a SEGY dataset.</td>
-</tr>
-<tr class="even">
-<td><a href="../reference/segy_scan.html#pysegy.segy_scan">segy_scan</a></td>
-<td>Scan one or more SEGY files and merge the results.</td>
-</tr>
-<tr class="odd">
-<td><a href="../reference/segy_read.html#pysegy.segy_read">segy_read</a></td>
-<td>Convenience wrapper to read a SEGY file.</td>
-</tr>
-<tr class="even">
-<td><a href="../reference/segy_write.html#pysegy.segy_write">segy_write</a></td>
-<td>Convenience wrapper to write <code>block</code> to <code>path</code>.</td>
-</tr>
-<tr class="odd">
-<td><a href="../reference/save_scan.html#pysegy.save_scan">save_scan</a></td>
-<td>Serialize <code>scan</code> to <code>path</code>.</td>
-</tr>
-<tr class="even">
-<td><a href="../reference/load_scan.html#pysegy.load_scan">load_scan</a></td>
-<td>Load a :class:<code>SegyScan</code> previously saved with :func:<code>save_scan</code>.</td>
-</tr>
-<tr class="odd">
-<td><a href="../reference/BinaryFileHeader.html#pysegy.BinaryFileHeader">BinaryFileHeader</a></td>
-<td>Container for parsed binary file header values.</td>
-</tr>
-<tr class="even">
-<td><a href="../reference/BinaryTraceHeader.html#pysegy.BinaryTraceHeader">BinaryTraceHeader</a></td>
-<td>Container for parsed binary trace header values.</td>
-</tr>
-<tr class="odd">
-<td><a href="../reference/FileHeader.html#pysegy.FileHeader">FileHeader</a></td>
-<td>Combined textual and binary file header.</td>
-</tr>
-</tbody>
-</table>
+<section id="pysegy.BinaryFileHeader" class="level1">
+<h1>BinaryFileHeader</h1>
+<div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>BinaryFileHeader(</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    values<span class="op">=</span><span class="kw">lambda</span>: {k: <span class="dv">0</span><span class="er">for</span> k <span class="kw">in</span> FH_FIELDS}(),</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    keys_loaded<span class="op">=</span><span class="kw">lambda</span>: <span class="bu">list</span>(FH_FIELDS)(),</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Container for parsed binary file header values.</p>
 
 
-</section>
 </section>
 
 </main> <!-- /main -->
