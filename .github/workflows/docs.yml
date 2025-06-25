@@ -19,7 +19,8 @@ jobs:
           python-version: '3.11'
 
       - name: Install python deps
-        run: pip install quartodoc jupyter
+        run: |
+          pip install quartodoc jupyter
 
       - name: Install package
         run: pip install -e .

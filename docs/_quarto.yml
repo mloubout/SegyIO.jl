@@ -2,6 +2,9 @@ project:
   type: website
   output-dir: _site
 
+metadata-files:
+  - _sidebar.yml
+
 website:
   title: "pysegy"
   navbar:
@@ -17,13 +20,45 @@ website:
 
 format:
   html:
-    theme: cosmo
+    theme:
+      light: cosmo
+      dark: cyborg
+    toc: true
+    link-external-newwindow: True
+    code-copy: true
+    code-fold: false
+    execute: 
+      enabled: false
+  ipynb: default
 
 quartodoc:
+  style: pkgdown
+  sidebar: _sidebar.yml
   package: pysegy
   dir: reference
   source_dir: ..
+
+  options:
+    signature_name: short
+
+  renderer:
+    style: markdown
+    display_name: name
+
+  dynamic: true
+
   sections:
-    - contents:
-        - name: pysegy
-          package: null
+    - title: "pysegy"
+      desc: ""
+      contents:
+        - ShotRecord
+        - SegyScan
+        - SeisBlock
+        - segy_scan
+        - segy_read
+        - segy_write
+        - save_scan
+        - load_scan
+        - BinaryFileHeader
+        - BinaryTraceHeader
+        - FileHeader

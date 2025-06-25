@@ -15,7 +15,13 @@ from .read import (
     read_file,
     segy_read,
 )
-from .scan import SegyScan, segy_scan, save_scan, load_scan
+from .scan import (
+    ShotRecord,
+    SegyScan,
+    segy_scan,
+    save_scan,
+    load_scan
+)
 from .write import (
     write_fileheader,
     write_traceheader,
@@ -30,6 +36,7 @@ __all__ = [
     "FileHeader",
     "SeisBlock",
     "SegyScan",
+    "ShotRecord",
     "read_fileheader",
     "read_traceheader",
     "read_file",

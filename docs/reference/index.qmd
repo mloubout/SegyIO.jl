@@ -1,14 +1,16 @@
 # Function reference {.doc .doc-index}
 
+## pysegy
+
 
 
 | | |
 | --- | --- |
-| [pysegy](pysegy.qmd#pysegy) | Minimal Python port of SegyIO.jl. |
-| [segy_scan](pysegy.qmd#segy_scan) | Scan one or more SEGY files |
-| [segy_read](pysegy.qmd#segy_read) | Read an entire SEGY file |
-| [segy_write](pysegy.qmd#segy_write) | Write a SEGY file |
-| [get_header](pysegy.qmd#get_header) | Extract header values |
-| [ShotRecord](pysegy.qmd#ShotRecord) | Metadata for a single shot |
-| [SegyScan](pysegy.qmd#SegyScan) | Collection of ShotRecord objects |
-| [SeisBlock](pysegy.qmd#SeisBlock) | In-memory data block |
+| [ShotRecord](ShotRecord.qmd#pysegy.ShotRecord) | Information about a single shot location within a SEGY file. |
+| [SegyScan](SegyScan.qmd#pysegy.SegyScan) | Representation of SEGY data grouped by shot. |
+| [SeisBlock](SeisBlock.qmd#pysegy.SeisBlock) | In-memory representation of a SEGY dataset. |
+| [segy_scan](segy_scan.qmd#pysegy.segy_scan) | Scan one or more SEGY files and merge the results. |
+| [segy_read](segy_read.qmd#pysegy.segy_read) | Convenience wrapper to read a SEGY file. |
+| [segy_write](segy_write.qmd#pysegy.segy_write) | Convenience wrapper to write ``block`` to ``path``. |
+| [save_scan](save_scan.qmd#pysegy.save_scan) | Serialize ``scan`` to ``path``. |
+| [load_scan](load_scan.qmd#pysegy.load_scan) | Load a :class:`SegyScan` previously saved with :func:`save_scan`. |
