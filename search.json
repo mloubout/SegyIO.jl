@@ -1,0 +1,58 @@
+[
+  {
+    "objectID": "reference/pysegy.html",
+    "href": "reference/pysegy.html",
+    "title": "pysegy",
+    "section": "",
+    "text": "pysegy\n``\nMinimal Python port of SegyIO.jl."
+  },
+  {
+    "objectID": "read.html",
+    "href": "read.html",
+    "title": "Read",
+    "section": "",
+    "text": "This page shows how to read SEGY data using pysegy.\n\nimport pysegy as seg\n\n# path to a SEGY file\npath = \"data/overthrust_2D_shot_1_20.segy\"\n\n# load the file into memory\nblock = seg.segy_read(path)\n\n# file header information\nprint(block.fileheader.bfh.ns)\n\nUse :func:pysegy.segy_read to read an entire file in one call. The returned :class:pysegy.SeisBlock contains the file header, trace headers and data array."
+  },
+  {
+    "objectID": "write.html",
+    "href": "write.html",
+    "title": "Write",
+    "section": "",
+    "text": "Writing SEGY files mirrors the reading workflow.\n\nimport numpy as np\nimport pysegy as seg\n\nfh = seg.FileHeader()\nfh.bfh.ns = 2\nfh.bfh.DataSampleFormat = 5\n\n# two traces with minimal headers\nhdr = seg.BinaryTraceHeader()\nhdr.ns = 2\n\ndata = np.array([[1.0], [2.0]], dtype=np.float32)\nblock = seg.SeisBlock(fh, [hdr], data)\n\nseg.segy_write(\"out.segy\", block)\n\nThe :func:pysegy.segy_write helper takes a :class:pysegy.SeisBlock and writes a complete SEGY file to disk."
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "pysegy",
+    "section": "",
+    "text": "pysegy is a minimal Python library for reading and writing SEGY Rev 1 files. The package focuses on simplicity and provides helpers to parse headers and traces from local files.\n\n\nInstall the project in editable mode from the repository root:\npython -m pip install -e .\n\n\n\nRun the unit tests with pytest:\npytest -vs\nThe tests run automatically on GitHub Actions with coverage reports uploaded to Codecov."
+  },
+  {
+    "objectID": "index.html#installation",
+    "href": "index.html#installation",
+    "title": "pysegy",
+    "section": "",
+    "text": "Install the project in editable mode from the repository root:\npython -m pip install -e ."
+  },
+  {
+    "objectID": "index.html#testing",
+    "href": "index.html#testing",
+    "title": "pysegy",
+    "section": "",
+    "text": "Run the unit tests with pytest:\npytest -vs\nThe tests run automatically on GitHub Actions with coverage reports uploaded to Codecov."
+  },
+  {
+    "objectID": "scan.html",
+    "href": "scan.html",
+    "title": "Scan",
+    "section": "",
+    "text": "Scanning allows inspecting large surveys without loading everything in memory.\n\nimport pysegy as seg\n\n# scan all matching files in the directory\nscan = seg.segy_scan(\"data\", \"overthrust_2D_shot_*.segy\")\n\nprint(len(scan.shots))  # number of shot records\nprint(scan.counts[0])   # traces in the first shot\n\nThe :func:pysegy.segy_scan function summarises multiple files and returns a :class:pysegy.SegyScan that can lazily read data for each shot."
+  },
+  {
+    "objectID": "reference/index.html",
+    "href": "reference/index.html",
+    "title": "Function reference",
+    "section": "",
+    "text": "Function reference\n\n\n\npysegy\nMinimal Python port of SegyIO.jl."
+  }
+]
