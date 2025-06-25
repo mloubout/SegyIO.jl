@@ -410,7 +410,7 @@
     "href": "index.html",
     "title": "pysegy",
     "section": "",
-    "text": "pysegy is a minimal Python library for working with SEGY Rev 1 data. The project provides helpers to read and write files as well as utilities to scan large surveys without loading every trace in memory.\n\n\n\nRead complete SEGY files with segy_read and access both binary and trace headers.\nWrite new data sets using segy_write from NumPy arrays.\nLazily inspect large archives via segy_scan and the SegyScan object.\nRetrieve individual header fields with automatic scaling through get_header.\nCompatible with any fsspec filesystem for local or remote storage.\n\n\n\n\nInstall the project in editable mode from the repository root:\npython -m pip install -e .\n\n\n\nRun the unit tests with pytest:\npytest -vs\nThe tests run automatically on GitHub Actions with coverage reports uploaded to Codecov.\n\n\n\nThis project started as a lightweight port of the Julia package SegyIO.jl. The goal is to provide a similar user experience for Python while keeping the code base small and easy to understand."
+    "text": "pysegy is a minimal Python library for working with SEGY Rev 1 data. The project provides helpers to read and write files as well as utilities to scan large surveys without loading every trace in memory.\n\n\n\nRead complete SEGY files with segy_read and access both binary and trace headers.\nWrite new data sets using segy_write from NumPy arrays.\nLazily inspect large archives via segy_scan and the SegyScan object.\nRetrieve individual header fields with automatic scaling through get_header.\nCompatible with any fsspec filesystem for local or remote storage.\n\n\n\n\nInstall the project in editable mode from the repository root:\npython -m pip install -e .\nOr to install the latest pypi release\npip install pysegy\n\n\n\nRun the unit tests with pytest:\npytest -vs\nThe tests run automatically on GitHub Actions with coverage reports uploaded to Codecov.\n\n\n\nThis project started as a lightweight port of the Julia package SegyIO.jl. The goal is to provide a similar user experience for Python while keeping the code base small and easy to understand."
   },
   {
     "objectID": "index.html#capabilities",
@@ -424,7 +424,7 @@
     "href": "index.html#installation",
     "title": "pysegy",
     "section": "",
-    "text": "Install the project in editable mode from the repository root:\npython -m pip install -e ."
+    "text": "Install the project in editable mode from the repository root:\npython -m pip install -e .\nOr to install the latest pypi release\npip install pysegy"
   },
   {
     "objectID": "index.html#testing",
