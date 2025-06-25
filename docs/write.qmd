@@ -5,7 +5,6 @@ title: "Write"
 Writing SEGY files mirrors the reading workflow.
 
 ```{python}
-#| eval: false
 import numpy as np
 import pysegy as seg
 
@@ -23,5 +22,6 @@ block = seg.SeisBlock(fh, [hdr], data)
 seg.segy_write("out.segy", block)
 ```
 
-The :func:`pysegy.segy_write` helper takes a :class:`pysegy.SeisBlock` and
-writes a complete SEGY file to disk.
+The [pysegy.segy_write](reference/pysegy.qmd#segy_write) helper takes a
+[pysegy.SeisBlock](reference/pysegy.qmd#SeisBlock) and writes a complete
+SEGY file to disk.
