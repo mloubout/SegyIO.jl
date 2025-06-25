@@ -2,7 +2,7 @@
 Helpers for scanning SEGY files by shot location.
 """
 
-from typing import Dict, Iterable, List, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import os
 import threading
@@ -35,6 +35,7 @@ class ShotRecord:
     summary: dict = field(default_factory=dict)
     ns: int = 0
     dt: int = 0
+    fs: Any = field(default=None, repr=False)
     _data: Optional[np.ndarray] = field(default=None, init=False, repr=False)
     _headers: Optional[List[BinaryTraceHeader]] = field(
         default=None, init=False, repr=False
@@ -66,7 +67,8 @@ class ShotRecord:
         """Load all traces for this shot."""
         data_parts = []
         for offset, count in self.segments:
-            with open(self.path, "rb") as f:
+            opener = self.fs.open if self.fs is not None else open
+            with opener(self.path, "rb") as f:
                 f.seek(offset)
                 h, d = read_traces(
                     f,
@@ -85,7 +87,8 @@ class ShotRecord:
         headers: List[BinaryTraceHeader] = []
         ns = self.fileheader.bfh.ns
         for offset, count in self.segments:
-            with open(self.path, "rb") as f:
+            opener = self.fs.open if self.fs is not None else open
+            with opener(self.path, "rb") as f:
                 f.seek(offset)
                 for _ in range(count):
                     th = read_traceheader(f, keys)
@@ -232,7 +235,7 @@ class SegyScan:
         Collection of shot metadata describing trace segments.
     """
 
-    def __init__(self, fh: FileHeader, records: List[ShotRecord]) -> None:
+    def __init__(self, fh: FileHeader, records: List[ShotRecord], fs=None) -> None:
         """Create a new :class:`SegyScan` instance.
 
         Parameters
@@ -241,9 +244,12 @@ class SegyScan:
             File header common to all files being scanned.
         records : list of ShotRecord
             Shot metadata describing trace segments.
+        fs : filesystem-like object, optional
+            Filesystem providing ``open`` for reading data lazily.
         """
         self.fileheader = fh
         self.records = records
+        self.fs = fs
         self._data: Optional[List[SeisBlock]] = None
 
     def __len__(self) -> int:
@@ -307,7 +313,10 @@ class SegyScan:
         headers: List[BinaryTraceHeader] = []
         data_parts = []
         for offset, count in rec.segments:
-            with open(rec.path, "rb") as f:
+            opener = rec.fs.open if rec.fs is not None else (
+                self.fs.open if getattr(self, "fs", None) is not None else open
+            )
+            with opener(rec.path, "rb") as f:
                 f.seek(offset)
                 h, d = read_traces(
                     f,
@@ -347,7 +356,10 @@ class SegyScan:
         headers: List[BinaryTraceHeader] = []
         ns = self.fileheader.bfh.ns
         for offset, count in rec.segments:
-            with open(rec.path, "rb") as f:
+            opener = rec.fs.open if rec.fs is not None else (
+                self.fs.open if getattr(self, "fs", None) is not None else open
+            )
+            with opener(rec.path, "rb") as f:
                 f.seek(offset)
                 for _ in range(count):
                     th = read_traceheader(f, keys)
@@ -455,6 +467,7 @@ def _scan_file(
                     {},
                     ns,
                     fh.bfh.dt,
+                    fs,
                 )
                 records[src] = rec
             _update_summary(rec.summary, th, keys or [])
@@ -478,7 +491,7 @@ def _scan_file(
 
     record_list = sorted(records.values(), key=lambda r: r.coordinates)
     print(f"{thread} found {len(record_list)} shots in {path}")
-    return SegyScan(fh, record_list)
+    return SegyScan(fh, record_list, fs=fs)
 
 
 def segy_scan(
@@ -564,7 +577,7 @@ def segy_scan(
     records.sort(key=lambda r: r.coordinates)
 
     print(f"Combined scan has {len(records)} shots")
-    return SegyScan(fh, records)
+    return SegyScan(fh, records, fs=fs)
 
 
 def save_scan(path: str, scan: SegyScan, fs=None) -> None:
@@ -607,5 +620,13 @@ def load_scan(path: str, fs=None) -> SegyScan:
     opener = fs.open if fs is not None else open
     with opener(path, "rb") as f:
         scan = cloudpickle.load(f)
+
+    # When loading from external storage the filesystem won't be part of the
+    # serialized object. Attach it so lazy reads work correctly.
+    if fs is not None:
+        scan.fs = fs
+        for rec in scan.records:
+            rec.fs = fs
+
     print(f"Loaded SegyScan with {len(scan.records)} shots")
     return scan
