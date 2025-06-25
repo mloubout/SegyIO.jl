@@ -6,11 +6,10 @@ Scanning allows inspecting large surveys without loading everything in
 memory.
 
 ```{python}
-from pathlib import Path
 import pysegy as seg
 
 # scan all matching files in the repository data directory
-data_dir = Path(__file__).resolve().parents[1] / "data"
+data_dir = "../data"
 scan = seg.segy_scan(data_dir, "overthrust_2D_shot_*.segy")
 
 print(len(scan.shots))  # number of shot records
