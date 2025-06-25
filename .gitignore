@@ -1,0 +1,7 @@
+__pycache__/
+pysegy/__pycache__/
+pysegy/tests/__pycache__/
+.coverage
+coverage.xml
+htmlcov/
+data/test_write.segy
