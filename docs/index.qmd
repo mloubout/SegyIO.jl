@@ -1,5 +1,5 @@
 ---
-title: "SegyIO.jl"
+title: "pysegy"
 ---
 
 {{< include ../README.md >}}

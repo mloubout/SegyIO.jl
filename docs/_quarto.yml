@@ -3,7 +3,7 @@ project:
   output-dir: _site
 
 website:
-  title: "SegyIO.jl"
+  title: "pysegy"
   navbar:
     left:
       - text: "Home"
@@ -19,4 +19,4 @@ quartodoc:
   package: pysegy
   dir: reference
   sections:
-    - contents: [SegyIO]
+    - contents: [pysegy]
