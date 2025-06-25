@@ -1,0 +1,5 @@
+---
+title: "SegyIO.jl"
+---
+
+{{< include ../README.md >}}
