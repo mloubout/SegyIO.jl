@@ -40,7 +40,10 @@ def _plot_with_units(
     nz, nx = arr.shape
     dz, dx = spacing
     oz, ox = origin
-    depth = np.arange(nz, dtype=float) ** d_scale if d_scale != 0 else 1.0
+    if d_scale != 0:
+        depth = np.arange(nz, dtype=float) ** d_scale
+    else:
+        depth = np.ones(nz, dtype=float)
     scaled = arr * depth[:, None]
     vmin, vmax = _clip_limits(scaled, perc, positive, vmax)
     extent = [ox, ox + (nx - 1) * dx, oz + (nz - 1) * dz, oz]
@@ -181,5 +184,11 @@ def compare_shots(
     for start in range(chunksize, nrec, 2 * chunksize):
         out2[:, start:start + chunksize] = arr2[:, start:start + chunksize]
     plot_sdata(out1, spacing, cmap=cmap[0], **kw)
-    _plot_with_units(out2, spacing, cmap=cmap[1], new_fig=False, alpha=0.25, **kw)
-
+    _plot_with_units(
+        out2,
+        spacing,
+        cmap=cmap[1],
+        new_fig=False,
+        alpha=0.25,
+        **kw,
+    )
