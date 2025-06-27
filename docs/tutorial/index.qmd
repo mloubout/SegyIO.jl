@@ -1,0 +1,10 @@
+---
+title: Tutorial
+sidebar:
+  style: docked
+  contents:
+    - ../notebooks/bp_scan_tutorial.ipynb
+    - ../notebooks/read_write_tutorial.ipynb
+---
+
+Select a notebook from the sidebar to explore pysegy.
