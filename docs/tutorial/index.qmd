@@ -7,4 +7,4 @@ sidebar:
     - ../../notebooks/read_write_tutorial.ipynb
 ---
 
-Select a notebook from the sidebar to explore pysegy.
+Tutorials show how to use **pysegy** in practice.

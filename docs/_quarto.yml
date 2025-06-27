@@ -7,7 +7,52 @@ metadata-files:
 
 website:
   title: "pysegy"
+  repo-url: https://github.com/mloubout/pysegy.github.io
+  repo-actions: [issue]
+  page-navigation: true
+  reader-mode: true
+  back-to-top-navigation: true
+  google-analytics: "G-ERCRWL13YZ"
+  search:
+    type: overlay
+
+  twitter-card: 
+    site: "@Louboutjunior"
+
+  page-footer:
+    center:
+      - text: "Copyright (c) Mathias Louboutin 2023-2024"
+    right:
+      - icon: twitter
+        href: https://twitter.com/Louboutjunior
+        aria-label: Twitter
+      - icon: github
+        href: https://github.com/mloubout
+        aria-label: GitHub
+      - icon: envelope-at-fill
+        href: mailto:mathias@devitocodes.com
+      - icon: globe
+        href: https://www.devitocodes.com/
+
   navbar:
+    tools:
+      - icon: github
+        href: https://github.com/mloubout
+      - icon: twitter
+        href: https://twitter.com/Louboutjunior
+      - icon: linkedin
+        href: https://www.linkedin.com/in/mathias-louboutin-a116b957/
+      - icon: envelope-at-fill
+        menu:
+          - text: Personal
+            href: mailto:mathias.louboutin@gmail.com
+          - text: Professional
+            href: mailto:mathias@devitocodes.com
+      - icon: slack
+        href: https://join.slack.com/t/devitocodes/shared_invite/zt-2hgp6891e-jQDcepOWPQwxL5JJegYKSA
+      - icon: globe
+        href: https://www.devitocodes.com/
+
     left:
       - text: "Read"
         href: read.qmd
@@ -15,10 +60,20 @@ website:
         href: write.qmd
       - text: "Scan"
         href: scan.qmd
-      - text: "Tutorial"
+      - text: "Tutorials"
         href: tutorial/index.qmd
       - text: "API"
         href: reference/index.qmd
+
+  sidebar:
+    - id: tuto
+      style: "floating"
+      title: "Tutorials"
+      collapse-level: 1
+      contents:
+          - section: Tutorials
+            href: tutorial/index.qmd
+            contents: "tutorial/*.ipynb"
 
 format:
   html:

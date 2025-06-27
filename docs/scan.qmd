@@ -16,7 +16,7 @@ print(len(scan.shots))  # number of shot records
 print(scan.counts[0])   # traces in the first shot
 ```
 
-The [pysegy.segy_scan](reference/pysegy.qmd#segy_scan) function
+The [pysegy.segy_scan](reference/segy_scan.html#pysegy.segy_scan) function
 summarises multiple files and returns a
-[pysegy.SegyScan](reference/pysegy.qmd#SegyScan) that can lazily read data
+[pysegy.SegyScan](reference/SegyScan.html#pysegy.SegyScan) that can lazily read data
 for each shot.

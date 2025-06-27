@@ -27,7 +27,7 @@ jobs:
 
       - name: Build API docs
         run: |
-          cp ../notebooks/bp_scan_tutorial.ipynb bp_scan_tutorial.ipynb
+          cp ../notebooks/*.ipynb tutorial/
           quartodoc build
         working-directory: docs
 

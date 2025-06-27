@@ -17,7 +17,7 @@ block = seg.segy_read(path)
 print(block.fileheader.bfh.ns)
 ```
 
-Use [pysegy.segy_read](reference/pysegy.qmd#segy_read) to read an entire
+Use [pysegy.segy_read](reference/segy_read.html#pysegy.segy_read) to read an entire
 file in one call. The returned
-[pysegy.SeisBlock](reference/pysegy.qmd#SeisBlock) contains the file
+[pysegy.SeisBlock](reference/SeisBlock.html) contains the file
 header, trace headers and data array.
