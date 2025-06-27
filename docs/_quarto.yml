@@ -16,42 +16,20 @@ website:
   search:
     type: overlay
 
-  twitter-card: 
-    site: "@Louboutjunior"
-
   page-footer:
     center:
       - text: "Copyright (c) Mathias Louboutin 2023-2024"
     right:
-      - icon: twitter
-        href: https://twitter.com/Louboutjunior
-        aria-label: Twitter
       - icon: github
-        href: https://github.com/mloubout
+        href: https://github.com/mloubout/pysegy
         aria-label: GitHub
-      - icon: envelope-at-fill
-        href: mailto:mathias@devitocodes.com
-      - icon: globe
-        href: https://www.devitocodes.com/
 
   navbar:
     tools:
       - icon: github
-        href: https://github.com/mloubout
-      - icon: twitter
-        href: https://twitter.com/Louboutjunior
-      - icon: linkedin
-        href: https://www.linkedin.com/in/mathias-louboutin-a116b957/
-      - icon: envelope-at-fill
-        menu:
-          - text: Personal
-            href: mailto:mathias.louboutin@gmail.com
-          - text: Professional
-            href: mailto:mathias@devitocodes.com
+        href: https://github.com/mloubout/pysegy
       - icon: slack
         href: https://join.slack.com/t/devitocodes/shared_invite/zt-2hgp6891e-jQDcepOWPQwxL5JJegYKSA
-      - icon: globe
-        href: https://www.devitocodes.com/
 
     left:
       - text: "Read"
