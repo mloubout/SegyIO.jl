@@ -197,62 +197,6 @@
     ]
   },
   {
-    "objectID": "reference/pysegy.html",
-    "href": "reference/pysegy.html",
-    "title": "pysegy",
-    "section": "",
-    "text": "API reference for the main helpers and data structures.\n\n\nScan one or more SEGY files and return a SegyScan.\npysegy.segy_scan(path, file_key=None, keys=None, chunk=1024,\n                 depth_key=\"SourceDepth\", rec_depth_key=\"GroupWaterDepth\",\n                 threads=None, fs=None)\n\n\n\nRead an entire SEGY file into a SeisBlock.\npysegy.segy_read(path, keys=None, workers=5, fs=None)\n\n\n\nWrite a SeisBlock to disk.\npysegy.segy_write(path, block, fs=None)\n\n\n\nExtract header values from a block or list of headers.\npysegy.get_header(src, name, scale=True)\n\n\n\nMetadata describing a single shot in a survey.\n\n\n\nCollection of ShotRecord objects produced by segy_scan.\n\n\n\nIn-memory representation of traces read from a SEGY file."
-  },
-  {
-    "objectID": "reference/pysegy.html#segy_scan",
-    "href": "reference/pysegy.html#segy_scan",
-    "title": "pysegy",
-    "section": "",
-    "text": "Scan one or more SEGY files and return a SegyScan.\npysegy.segy_scan(path, file_key=None, keys=None, chunk=1024,\n                 depth_key=\"SourceDepth\", rec_depth_key=\"GroupWaterDepth\",\n                 threads=None, fs=None)"
-  },
-  {
-    "objectID": "reference/pysegy.html#segy_read",
-    "href": "reference/pysegy.html#segy_read",
-    "title": "pysegy",
-    "section": "",
-    "text": "Read an entire SEGY file into a SeisBlock.\npysegy.segy_read(path, keys=None, workers=5, fs=None)"
-  },
-  {
-    "objectID": "reference/pysegy.html#segy_write",
-    "href": "reference/pysegy.html#segy_write",
-    "title": "pysegy",
-    "section": "",
-    "text": "Write a SeisBlock to disk.\npysegy.segy_write(path, block, fs=None)"
-  },
-  {
-    "objectID": "reference/pysegy.html#get_header",
-    "href": "reference/pysegy.html#get_header",
-    "title": "pysegy",
-    "section": "",
-    "text": "Extract header values from a block or list of headers.\npysegy.get_header(src, name, scale=True)"
-  },
-  {
-    "objectID": "reference/pysegy.html#ShotRecord",
-    "href": "reference/pysegy.html#ShotRecord",
-    "title": "pysegy",
-    "section": "",
-    "text": "Metadata describing a single shot in a survey."
-  },
-  {
-    "objectID": "reference/pysegy.html#SegyScan",
-    "href": "reference/pysegy.html#SegyScan",
-    "title": "pysegy",
-    "section": "",
-    "text": "Collection of ShotRecord objects produced by segy_scan."
-  },
-  {
-    "objectID": "reference/pysegy.html#SeisBlock",
-    "href": "reference/pysegy.html#SeisBlock",
-    "title": "pysegy",
-    "section": "",
-    "text": "In-memory representation of traces read from a SEGY file."
-  },
-  {
     "objectID": "scan.html",
     "href": "scan.html",
     "title": "Scan",
