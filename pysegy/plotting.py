@@ -84,7 +84,7 @@ def _plot_with_units(
     cmap: str = "gray",
     vmax: float | None = None,
     origin: Tuple[float, float] = (0.0, 0.0),
-    interp: str = "nearest",
+    interp: str = "hanning",
     aspect: str | None = None,
     d_scale: float = 0.0,
     positive: bool = False,
