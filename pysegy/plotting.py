@@ -21,7 +21,8 @@ def _extract_spacing(
     src: ArrayLike | SeisBlock | ShotRecord,
     spacing: Tuple[float, float] | None,
 ) -> Tuple[np.ndarray, Tuple[float, float]]:
-    """Return data array and spacing for ``src``.
+    """
+    Return data array and spacing for ``src``.
 
     Parameters
     ----------
@@ -62,7 +63,9 @@ def _extract_spacing(
 
 def _clip_limits(img: np.ndarray, perc: int = 95, positive: bool = False,
                  vmax: float | None = None) -> Tuple[float, float]:
-    """Return intensity limits for an image based on percentiles."""
+    """
+    Return intensity limits for an image based on percentiles.
+    """
 
     if positive:
         high = np.percentile(img, perc)
@@ -93,7 +96,8 @@ def _plot_with_units(
     new_fig: bool = True,
     save: str | None = None,
 ):
-    """Display ``image`` using ``spacing`` for axis units.
+    """
+    Display ``image`` using ``spacing`` for axis units.
 
     ``image`` can be an ``ndarray`` or a :class:`SeisBlock` or
     :class:`ShotRecord`.  When ``spacing`` is ``None`` it will be derived from
@@ -141,7 +145,8 @@ def plot_simage(
     spacing: Tuple[float, float] | None = None,
     **kw,
 ):
-    """Plot a migrated image with depth on the vertical axis.
+    """
+    Plot a migrated image with depth on the vertical axis.
 
     Parameters
     ----------
@@ -164,7 +169,8 @@ def plot_velocity(
     spacing: Tuple[float, float] | None = None,
     **kw,
 ):
-    """Plot a velocity model.
+    """
+    Plot a velocity model.
 
     Parameters
     ----------
@@ -207,7 +213,8 @@ def plot_sdata(
     spacing: Tuple[float, float] | None = None,
     **kw,
 ):
-    """Visualize a single shot record.
+    """
+    Visualize a single shot record.
 
     ``image`` may be a raw ``ndarray`` or a :class:`SeisBlock` or
     :class:`ShotRecord`.  ``spacing`` follows the same rules as in
@@ -228,7 +235,8 @@ def wiggle_plot(
     t_scale: float = 1.5,
     new_fig: bool = True,
 ):
-    """Generate a classic wiggle plot for ``data``.
+    """
+    Generate a classic wiggle plot for ``data``.
 
     ``data`` can be an ``ndarray`` or seismic container. When ``xrec`` or
     ``time_axis`` are omitted they are inferred from the headers when possible.
@@ -268,7 +276,8 @@ def compare_shots(
     chunksize: int = 20,
     **kw,
 ):
-    """Overlay or juxtapose two shot gathers for comparison.
+    """
+    Overlay or juxtapose two shot gathers for comparison.
 
     Parameters
     ----------
