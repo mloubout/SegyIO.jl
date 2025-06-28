@@ -2,6 +2,7 @@ import os
 import importlib
 import importlib.metadata
 from io import BytesIO
+import fsspec
 
 import numpy as np
 import pytest
@@ -9,11 +10,14 @@ import pytest
 import pysegy as seg
 from pysegy.types import FileHeader, BinaryTraceHeader, SeisBlock, BinaryFileHeader
 
-DATAFILE = os.path.join(os.path.dirname(__file__), "..", "..", "data", "overthrust_2D_shot_1_20.segy")
+DATAFILE = os.path.join(os.path.dirname(__file__),
+                        "..", "..", "data", "overthrust_2D_shot_1_20.segy")
 
 
 def test_package_not_found(monkeypatch):
-    monkeypatch.setattr(importlib.metadata, "version", lambda name: (_ for _ in ()).throw(importlib.metadata.PackageNotFoundError()))
+    importerror = importlib.metadata.PackageNotFoundError()
+    monkeypatch.setattr(importlib.metadata, "version",
+                        lambda name: (_ for _ in ()).throw(importerror))
     importlib.reload(seg)
     assert seg.__version__ == "0+untagged"
 
@@ -105,9 +109,6 @@ def test_read_write_ibm():
     assert out.data.shape == data.shape
 
 
-import fsspec
-
-
 def test_scan_utilities(tmp_path):
     fs = fsspec.filesystem("file")
     scan = seg.segy_scan(DATAFILE, keys=["GroupX", "Offset"], fs=fs)
@@ -129,4 +130,3 @@ def test_scan_errors(tmp_path):
     fs = fsspec.filesystem("file")
     with pytest.raises(FileNotFoundError):
         seg.segy_scan(str(empty), fs=fs)
-
