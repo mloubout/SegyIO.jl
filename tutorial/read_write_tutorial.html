@@ -65,7 +65,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../">
-<link href="../tutorial/bp_scan_tutorial.html" rel="prev">
+<link href="../tutorial/plotting_example.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
@@ -366,6 +366,12 @@ gtag('config', 'G-ERCRWL13YZ', { 'anonymize_ip': true});
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../tutorial/plotting_example.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Plotting utilities example</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../tutorial/read_write_tutorial.html" class="sidebar-item-text sidebar-link active">
  <span class="menu-text">Read and Write SEGY files with pysegy</span></a>
   </div>
@@ -417,17 +423,15 @@ gtag('config', 'G-ERCRWL13YZ', { 'anonymize_ip': true});
 
 
 <p>This tutorial demonstrates how to read existing SEGY data shipped with the repository and how to write new files using <strong>pysegy</strong>. We use one of the example files located in the <code>data</code> directory.</p>
-<div id="ea42df00" class="cell" data-execution_count="13">
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sys</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>sys.path.append(<span class="st">'..'</span>)  <span class="co"># allow importing the local pysegy package</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pysegy <span class="im">as</span> seg</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> fsspec</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="ea42df00" class="cell" data-execution_count="1">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pysegy <span class="im">as</span> seg</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> fsspec</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <section id="read-a-segy-file" class="level2">
 <h2 class="anchored" data-anchor-id="read-a-segy-file">Read a SEGY file</h2>
 <p>We first load the file using <code>segy_read</code> without specifying a filesystem.</p>
-<div id="ed264076" class="cell" data-execution_count="14">
+<div id="ed264076" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>path <span class="op">=</span> <span class="st">'../data/overthrust_2D_shot_1_20.segy'</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>block <span class="op">=</span> seg.segy_read(path)</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">'Samples per trace:'</span>, block.fileheader.bfh.ns)</span>
@@ -440,7 +444,7 @@ Number of traces: 3300</code></pre>
 </div>
 </div>
 <p>The first trace header contains a variety of fields. Here we display a few common values.</p>
-<div id="ced79ae4" class="cell" data-execution_count="15">
+<div id="ced79ae4" class="cell" data-execution_count="3">
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>hdr <span class="op">=</span> block.traceheaders[<span class="dv">0</span>]</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">'SourceX:'</span>, hdr.SourceX)</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">'GroupX:'</span>, hdr.GroupX)</span>
@@ -454,7 +458,7 @@ ns: 751</code></pre>
 <section id="visualise-a-trace" class="level3">
 <h3 class="anchored" data-anchor-id="visualise-a-trace">Visualise a trace</h3>
 <p>The trace data are stored in a NumPy array. The following plot shows the amplitudes of the first trace.</p>
-<div id="6e4e7239" class="cell" data-execution_count="16">
+<div id="6e4e7239" class="cell" data-execution_count="4">
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">6</span>,<span class="dv">3</span>))</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>plt.plot(block.data[:,<span class="dv">0</span>])</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>plt.title(<span class="st">'Trace 0'</span>)</span>
@@ -474,13 +478,8 @@ ns: 751</code></pre>
 <section id="visualise-the-whole-gather" class="level3">
 <h3 class="anchored" data-anchor-id="visualise-the-whole-gather">Visualise the whole gather</h3>
 <p>Using <code>imshow</code> helps see the shot as an image.</p>
-<div id="77a01eb4" class="cell" data-execution_count="17">
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">8</span>,<span class="dv">4</span>))</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>plt.imshow(block.data[:, :<span class="dv">800</span>], aspect<span class="op">=</span><span class="st">'auto'</span>, cmap<span class="op">=</span><span class="st">'gray'</span>, vmin<span class="op">=-</span><span class="fl">1e0</span>, vmax<span class="op">=</span><span class="fl">1e0</span>)</span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>plt.title(<span class="st">'Shot gather'</span>)</span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">'Trace'</span>)</span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">'Sample'</span>)</span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="77a01eb4" class="cell" data-execution_count="5">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>seg.plot_sdata(block.data[:, :<span class="dv">800</span>], (<span class="fl">.004</span>, <span class="dv">25</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
@@ -494,7 +493,7 @@ ns: 751</code></pre>
 <section id="write-a-new-file" class="level2">
 <h2 class="anchored" data-anchor-id="write-a-new-file">Write a new file</h2>
 <p>We create a small subset containing the first 20 traces and write it to a temporary file.</p>
-<div id="48c0a64b" class="cell" data-execution_count="18">
+<div id="48c0a64b" class="cell" data-execution_count="6">
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>subset <span class="op">=</span> seg.SeisBlock(block.fileheader, block.traceheaders[:<span class="dv">20</span>], block.data[:, :<span class="dv">20</span>])</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>out_path <span class="op">=</span> <span class="st">'subset.segy'</span></span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>seg.segy_write(out_path, subset)</span>
@@ -513,7 +512,7 @@ Wrote and reloaded subset.segy with 20 traces</code></pre>
 <section id="using-fsspec-filesystems" class="level2">
 <h2 class="anchored" data-anchor-id="using-fsspec-filesystems">Using fsspec filesystems</h2>
 <p>The same functions work with any filesystem that follows the <code>fsspec</code> interface. Here we use the local <code>file</code> implementation.</p>
-<div id="1459e58e" class="cell" data-execution_count="19">
+<div id="1459e58e" class="cell" data-execution_count="7">
 <div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>fs <span class="op">=</span> fsspec.filesystem(<span class="st">'file'</span>)</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>block_fs <span class="op">=</span> seg.segy_read(path, fs<span class="op">=</span>fs)</span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">'Read with filesystem, ns ='</span>, block_fs.fileheader.bfh.ns)</span>
@@ -536,39 +535,33 @@ Reloaded via fs, traces = 20</code></pre>
 <section id="scan-the-full-dataset" class="level2">
 <h2 class="anchored" data-anchor-id="scan-the-full-dataset">Scan the full dataset</h2>
 <p>We can scan all the overthrust files and access each shot without loading everything at once.</p>
-<div id="34fbb2a2" class="cell" data-execution_count="20">
+<div id="34fbb2a2" class="cell" data-execution_count="8">
 <div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>scan <span class="op">=</span> seg.segy_scan(<span class="st">'../data'</span>, <span class="st">'overthrust_2D_shot_*.segy'</span>)</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">'Shots found:'</span>, <span class="bu">len</span>(scan))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Scanning 5 files in ../data with 8 threads
-ThreadPoolExecutor-34_0 scanning file ../data/overthrust_2D_shot_1_20.segy
-ThreadPoolExecutor-34_1 scanning file ../data/overthrust_2D_shot_21_40.segy
+ThreadPoolExecutor-16_0 scanning file ../data/overthrust_2D_shot_1_20.segy
+ThreadPoolExecutor-16_1 scanning file ../data/overthrust_2D_shot_21_40.segy
 Header for ../data/overthrust_2D_shot_1_20.segy: ns=751 dt=4000
-ThreadPoolExecutor-34_2 scanning file ../data/overthrust_2D_shot_41_60.segy
-ThreadPoolExecutor-34_3 scanning file ../data/overthrust_2D_shot_61_80.segy
-ThreadPoolExecutor-34_4 scanning file ../data/overthrust_2D_shot_81_97.segy
+ThreadPoolExecutor-16_2 scanning file ../data/overthrust_2D_shot_41_60.segy
+ThreadPoolExecutor-16_3 scanning file ../data/overthrust_2D_shot_61_80.segy
 Header for ../data/overthrust_2D_shot_21_40.segy: ns=751 dt=4000
-Header for ../data/overthrust_2D_shot_61_80.segy: ns=751 dt=4000
-Header for ../data/overthrust_2D_shot_81_97.segy: ns=751 dt=4000
+ThreadPoolExecutor-16_4 scanning file ../data/overthrust_2D_shot_81_97.segy
 Header for ../data/overthrust_2D_shot_41_60.segy: ns=751 dt=4000
-ThreadPoolExecutor-34_0 found 20 shots in ../data/overthrust_2D_shot_1_20.segy
-ThreadPoolExecutor-34_4 found 17 shots in ../data/overthrust_2D_shot_81_97.segy
-ThreadPoolExecutor-34_1 found 20 shots in ../data/overthrust_2D_shot_21_40.segy
-ThreadPoolExecutor-34_3 found 20 shots in ../data/overthrust_2D_shot_61_80.segy
-ThreadPoolExecutor-34_3 found 20 shots in ../data/overthrust_2D_shot_61_80.segy
-ThreadPoolExecutor-34_2 found 20 shots in ../data/overthrust_2D_shot_41_60.segy
+Header for ../data/overthrust_2D_shot_81_97.segy: ns=751 dt=4000
+Header for ../data/overthrust_2D_shot_61_80.segy: ns=751 dt=4000
+ThreadPoolExecutor-16_4 found 17 shots in ../data/overthrust_2D_shot_81_97.segyThreadPoolExecutor-16_0 found 20 shots in ../data/overthrust_2D_shot_1_20.segy
+
+ThreadPoolExecutor-16_3 found 20 shots in ../data/overthrust_2D_shot_61_80.segy
+ThreadPoolExecutor-16_2 found 20 shots in ../data/overthrust_2D_shot_41_60.segy
+ThreadPoolExecutor-16_1 found 20 shots in ../data/overthrust_2D_shot_21_40.segy
 Combined scan has 97 shots
 Shots found: 97</code></pre>
 </div>
 </div>
-<div id="da0fe219" class="cell" data-execution_count="21">
+<div id="da0fe219" class="cell" data-execution_count="9">
 <div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>first <span class="op">=</span> scan[<span class="dv">0</span>]</span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">8</span>,<span class="dv">4</span>))</span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>plt.imshow(first.data, aspect<span class="op">=</span><span class="st">'auto'</span>, cmap<span class="op">=</span><span class="st">'gray'</span>, vmin<span class="op">=-</span><span class="fl">1e0</span>, vmax<span class="op">=</span><span class="fl">1e0</span>)</span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>plt.title(<span class="st">'First shot from scan'</span>)</span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">'Trace'</span>)</span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">'Sample'</span>)</span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>seg.plot_sdata(first)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
@@ -1001,8 +994,8 @@ Shots found: 97</code></pre>
   </script>
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
-      <a href="../tutorial/bp_scan_tutorial.html" class="pagination-link" aria-label="Scanning the BP dataset with pysegy">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Scanning the BP dataset with pysegy</span>
+      <a href="../tutorial/plotting_example.html" class="pagination-link" aria-label="Plotting utilities example">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Plotting utilities example</span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">
