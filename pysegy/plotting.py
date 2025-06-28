@@ -1,3 +1,5 @@
+"""Utility helpers for quick visualisation of seismic data."""
+
 import numpy as np
 import matplotlib.pyplot as plt
 from typing import Tuple, Sequence, Union
@@ -7,6 +9,8 @@ ArrayLike = Union[np.ndarray, Sequence[Sequence[float]]]
 
 def _clip_limits(img: np.ndarray, perc: int = 95, positive: bool = False,
                  vmax: float | None = None) -> Tuple[float, float]:
+    """Return intensity limits for an image based on percentiles."""
+
     if positive:
         high = np.percentile(img, perc)
         high = vmax if vmax is not None else high
@@ -36,6 +40,7 @@ def _plot_with_units(
     new_fig: bool = True,
     save: str | None = None,
 ):
+    """Display ``image`` using ``spacing`` for axis units."""
     arr = np.asarray(image)
     nz, nx = arr.shape
     dz, dx = spacing
@@ -79,6 +84,7 @@ def plot_simage(
     spacing: Tuple[float, float],
     **kw,
 ):
+    """Plot a migrated image with depth on the vertical axis."""
     kw.setdefault("cmap", "gray")
     kw.setdefault("name", "RTM")
     kw.setdefault("labels", ("X", "Depth"))
@@ -91,6 +97,7 @@ def plot_velocity(
     spacing: Tuple[float, float],
     **kw,
 ):
+    """Plot a velocity model."""
     kw.setdefault("cmap", "turbo")
     kw.setdefault("name", "Velocity")
     kw.setdefault("labels", ("X", "Depth"))
@@ -104,6 +111,7 @@ def plot_fslice(
     spacing: Tuple[float, float],
     **kw,
 ):
+    """Display a 2D frequency slice."""
     kw.setdefault("cmap", "seismic")
     kw.setdefault("name", "Frequency slice")
     kw.setdefault("labels", ("X", "X"))
@@ -116,6 +124,7 @@ def plot_sdata(
     spacing: Tuple[float, float],
     **kw,
 ):
+    """Visualize a single shot record."""
     kw.setdefault("cmap", "gray")
     kw.setdefault("name", "Shot record")
     kw.setdefault("labels", ("Xrec", "T"))
@@ -131,6 +140,7 @@ def wiggle_plot(
     t_scale: float = 1.5,
     new_fig: bool = True,
 ):
+    """Generate a classic wiggle plot for ``data``."""
     arr = np.asarray(data)
     if xrec is None:
         xrec = np.arange(arr.shape[1])
@@ -166,6 +176,7 @@ def compare_shots(
     chunksize: int = 20,
     **kw,
 ):
+    """Overlay or juxtapose two shot gathers for comparison."""
     arr1 = np.asarray(shot1)
     arr2 = np.asarray(shot2)
     if isinstance(cmap, str):
