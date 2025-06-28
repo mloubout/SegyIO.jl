@@ -1,10 +1,63 @@
-"""Utility helpers for quick visualisation of seismic data."""
+"""Utility helpers for quick visualisation of seismic data.
+
+The helpers mirror a subset of the `SlimPlotting.jl` API and can work
+directly with :class:`~pysegy.SeisBlock` or :class:`~pysegy.ShotRecord`
+instances.  When given one of these objects the functions will infer the
+sample spacing from the relevant headers so ``spacing`` can be omitted.
+"""
 
 import numpy as np
 import matplotlib.pyplot as plt
 from typing import Tuple, Sequence, Union
 
+from .types import SeisBlock
+from .scan import ShotRecord
+from .utils import get_header
+
 ArrayLike = Union[np.ndarray, Sequence[Sequence[float]]]
+
+
+def _extract_spacing(
+    src: ArrayLike | SeisBlock | ShotRecord,
+    spacing: Tuple[float, float] | None,
+) -> Tuple[np.ndarray, Tuple[float, float]]:
+    """Return data array and spacing for ``src``.
+
+    Parameters
+    ----------
+    src : ArrayLike or SeisBlock or ShotRecord
+        Input data object.
+    spacing : (float, float), optional
+        Pre-defined sample spacing ``(dz, dx)``. When ``None`` the spacing is
+        inferred from ``src`` when possible.
+
+    Returns
+    -------
+    array : numpy.ndarray
+        2-D array of samples.
+    spacing : tuple[float, float]
+        Sample spacing ``(dz, dx)``.
+    """
+
+    if isinstance(src, ShotRecord):
+        data = np.asarray(src.data)
+        if spacing is None:
+            dt = src.dt * 1e-6
+            recx = src.rec_coordinates[:, 0]
+            dx = float(np.median(np.diff(recx))) if len(recx) > 1 else 1.0
+            spacing = (dt, dx)
+    elif isinstance(src, SeisBlock):
+        data = np.asarray(src.data)
+        if spacing is None:
+            dt = src.fileheader.bfh.dt * 1e-6
+            gx = get_header(src, "GroupX")
+            dx = float(np.median(np.diff(gx))) if len(gx) > 1 else 1.0
+            spacing = (dt, dx)
+    else:
+        data = np.asarray(src)
+        if spacing is None:
+            spacing = (1.0, 1.0)
+    return data, spacing
 
 
 def _clip_limits(img: np.ndarray, perc: int = 95, positive: bool = False,
@@ -22,7 +75,7 @@ def _clip_limits(img: np.ndarray, perc: int = 95, positive: bool = False,
 
 def _plot_with_units(
     image: ArrayLike,
-    spacing: Tuple[float, float],
+    spacing: Tuple[float, float] | None,
     *,
     perc: int = 95,
     cmap: str = "gray",
@@ -40,10 +93,14 @@ def _plot_with_units(
     new_fig: bool = True,
     save: str | None = None,
 ):
-    """Display ``image`` using ``spacing`` for axis units."""
-    arr = np.asarray(image)
+    """Display ``image`` using ``spacing`` for axis units.
+
+    ``image`` can be an ``ndarray`` or a :class:`SeisBlock` or
+    :class:`ShotRecord`.  When ``spacing`` is ``None`` it will be derived from
+    the object headers if possible.
+    """
+    arr, (dz, dx) = _extract_spacing(image, spacing)
     nz, nx = arr.shape
-    dz, dx = spacing
     oz, ox = origin
     if d_scale != 0:
         depth = np.arange(nz, dtype=float) ** d_scale
@@ -80,11 +137,21 @@ def _plot_with_units(
 
 
 def plot_simage(
-    image: ArrayLike,
-    spacing: Tuple[float, float],
+    image: ArrayLike | SeisBlock | ShotRecord,
+    spacing: Tuple[float, float] | None = None,
     **kw,
 ):
-    """Plot a migrated image with depth on the vertical axis."""
+    """Plot a migrated image with depth on the vertical axis.
+
+    Parameters
+    ----------
+    image : array-like or SeisBlock or ShotRecord
+        Data to visualize.
+    spacing : (float, float), optional
+        ``(dz, dx)`` sample spacing. If omitted and ``image`` is a
+        :class:`SeisBlock` or :class:`ShotRecord` the spacing will be
+        extracted from the headers.
+    """
     kw.setdefault("cmap", "gray")
     kw.setdefault("name", "RTM")
     kw.setdefault("labels", ("X", "Depth"))
@@ -93,11 +160,19 @@ def plot_simage(
 
 
 def plot_velocity(
-    image: ArrayLike,
-    spacing: Tuple[float, float],
+    image: ArrayLike | SeisBlock | ShotRecord,
+    spacing: Tuple[float, float] | None = None,
     **kw,
 ):
-    """Plot a velocity model."""
+    """Plot a velocity model.
+
+    Parameters
+    ----------
+    image : array-like or SeisBlock or ShotRecord
+        Model to display.
+    spacing : (float, float), optional
+        ``(dz, dx)`` sample spacing derived from ``image`` when omitted.
+    """
     kw.setdefault("cmap", "turbo")
     kw.setdefault("name", "Velocity")
     kw.setdefault("labels", ("X", "Depth"))
@@ -107,11 +182,19 @@ def plot_velocity(
 
 
 def plot_fslice(
-    image: ArrayLike,
-    spacing: Tuple[float, float],
+    image: ArrayLike | SeisBlock | ShotRecord,
+    spacing: Tuple[float, float] | None = None,
     **kw,
 ):
-    """Display a 2D frequency slice."""
+    """Display a 2D frequency slice.
+
+    Parameters
+    ----------
+    image : array-like or SeisBlock or ShotRecord
+        Frequency-domain slice to plot.
+    spacing : (float, float), optional
+        ``(dz, dx)`` sample spacing derived from ``image`` when omitted.
+    """
     kw.setdefault("cmap", "seismic")
     kw.setdefault("name", "Frequency slice")
     kw.setdefault("labels", ("X", "X"))
@@ -120,11 +203,16 @@ def plot_fslice(
 
 
 def plot_sdata(
-    image: ArrayLike,
-    spacing: Tuple[float, float],
+    image: ArrayLike | SeisBlock | ShotRecord,
+    spacing: Tuple[float, float] | None = None,
     **kw,
 ):
-    """Visualize a single shot record."""
+    """Visualize a single shot record.
+
+    ``image`` may be a raw ``ndarray`` or a :class:`SeisBlock` or
+    :class:`ShotRecord`.  ``spacing`` follows the same rules as in
+    :func:`plot_simage`.
+    """
     kw.setdefault("cmap", "gray")
     kw.setdefault("name", "Shot record")
     kw.setdefault("labels", ("Xrec", "T"))
@@ -133,19 +221,23 @@ def plot_sdata(
 
 
 def wiggle_plot(
-    data: ArrayLike,
+    data: ArrayLike | SeisBlock | ShotRecord,
     xrec: Sequence[float] | None = None,
     time_axis: Sequence[float] | None = None,
     *,
     t_scale: float = 1.5,
     new_fig: bool = True,
 ):
-    """Generate a classic wiggle plot for ``data``."""
-    arr = np.asarray(data)
+    """Generate a classic wiggle plot for ``data``.
+
+    ``data`` can be an ``ndarray`` or seismic container. When ``xrec`` or
+    ``time_axis`` are omitted they are inferred from the headers when possible.
+    """
+    arr, (dt, dx) = _extract_spacing(data, None)
     if xrec is None:
-        xrec = np.arange(arr.shape[1])
+        xrec = np.arange(arr.shape[1]) * dx
     if time_axis is None:
-        time_axis = np.arange(arr.shape[0])
+        time_axis = np.arange(arr.shape[0]) * dt
     xrec = np.asarray(xrec)
     time_axis = np.asarray(time_axis)
     tg = time_axis ** t_scale
@@ -167,18 +259,26 @@ def wiggle_plot(
 
 
 def compare_shots(
-    shot1: ArrayLike,
-    shot2: ArrayLike,
-    spacing: Tuple[float, float],
+    shot1: ArrayLike | SeisBlock | ShotRecord,
+    shot2: ArrayLike | SeisBlock | ShotRecord,
+    spacing: Tuple[float, float] | None = None,
     *,
     cmap: Sequence[str] | str = "gray",
     side_by_side: bool = False,
     chunksize: int = 20,
     **kw,
 ):
-    """Overlay or juxtapose two shot gathers for comparison."""
-    arr1 = np.asarray(shot1)
-    arr2 = np.asarray(shot2)
+    """Overlay or juxtapose two shot gathers for comparison.
+
+    Parameters
+    ----------
+    shot1, shot2 : array-like or SeisBlock or ShotRecord
+        Gather data to compare.
+    spacing : (float, float), optional
+        Spacing applied when not deduced from the inputs.
+    """
+    arr1, spacing = _extract_spacing(shot1, spacing)
+    arr2, spacing = _extract_spacing(shot2, spacing)
     if isinstance(cmap, str):
         cmap = (cmap, cmap)
     if side_by_side:
