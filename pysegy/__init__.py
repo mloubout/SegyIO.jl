@@ -27,6 +27,14 @@ from .write import (
     segy_write,
 )
 from .utils import get_header
+from .plotting import (
+    plot_simage,
+    plot_velocity,
+    plot_fslice,
+    plot_sdata,
+    wiggle_plot,
+    compare_shots,
+)
 
 __all__ = [
     "BinaryFileHeader",
@@ -47,6 +55,12 @@ __all__ = [
     "write_block",
     "segy_write",
     "get_header",
+    "plot_simage",
+    "plot_velocity",
+    "plot_fslice",
+    "plot_sdata",
+    "wiggle_plot",
+    "compare_shots",
 ]
 
 

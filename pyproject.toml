@@ -23,6 +23,7 @@ dependencies = [
     "numpy>=2,<3",
     "fsspec>=2024.3",
     "cloudpickle>=3",
+    "matplotlib>=3.7"
 ]
 
 [project.optional-dependencies]

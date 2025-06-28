@@ -97,3 +97,12 @@ quartodoc:
         - BinaryFileHeader
         - BinaryTraceHeader
         - FileHeader
+    - title: "Plotting"
+      desc: ""
+      contents:
+        - plot_simage
+        - plot_sdata
+        - plot_velocity
+        - plot_fslice
+        - wiggle_plot
+        - compare_shots
