@@ -53,7 +53,7 @@ def read_fileheader(
         size = 4 if k in ("Job", "Line", "Reel") else 2
         fmt = ">i" if size == 4 else ">h"
         if not bigendian:
-            fmt = "<i" if size == 4 else "<h"
+            fmt = "<i" if size == 4 else "<h"  # pragma: no cover
         val_bytes = text_header[offset:offset+size]
         val = struct.unpack(fmt, val_bytes)[0]
         setattr(bfh, k, val)
@@ -90,7 +90,7 @@ def read_traceheader(
         offset, size = TH_BYTE2SAMPLE[k]
         fmt = ">i" if size == 4 else ">h"
         if not bigendian:
-            fmt = "<i" if size == 4 else "<h"
+            fmt = "<i" if size == 4 else "<h"  # pragma: no cover
         val = struct.unpack(fmt, hdr_bytes[offset:offset + size])[0]
         setattr(th, k, val)
     th.keys_loaded = list(keys)

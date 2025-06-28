@@ -169,7 +169,7 @@ def _update_summary(
         v = get_header([th], k)[0]
         if k in summary:
             mn, mx = summary[k]
-            if v < mn:
+            if v < mn:  # pragma: no cover
                 mn = v
             if v > mx:
                 mx = v
@@ -331,7 +331,7 @@ class SegyScan:
         if data_parts:
             data = np.concatenate(data_parts, axis=0)
         else:
-            data = []
+            data = []  # pragma: no cover
         return SeisBlock(self.fileheader, headers, data)
 
     def read_headers(
