@@ -384,6 +384,7 @@ def _scan_file(
     depth_key: str = "SourceDepth",
     rec_depth_key: str = "GroupWaterDepth",
     fs=None,
+    by_receiver: bool = False,
 ) -> SegyScan:
     """
     Scan ``path`` for shot locations.
@@ -400,6 +401,8 @@ def _scan_file(
         Trace header field giving the source depth.
     rec_depth_key : str, optional
         Header field giving the receiver depth.
+    by_receiver : bool, optional
+        Group traces by receiver coordinates instead of source coordinates.
 
     fs : filesystem-like object, optional
         Filesystem providing ``open`` if reading from non-local storage.
@@ -450,11 +453,18 @@ def _scan_file(
             trace_keys,
             chunk,
         ):
-            src = (
-                np.float32(get_header([th], "SourceX")[0]),
-                np.float32(get_header([th], "SourceY")[0]),
-                np.float32(get_header([th], depth_key)[0]),
-            )
+            if by_receiver:
+                src = (
+                    np.float32(get_header([th], "GroupX")[0]),
+                    np.float32(get_header([th], "GroupY")[0]),
+                    np.float32(get_header([th], rec_depth_key)[0]),
+                )
+            else:
+                src = (
+                    np.float32(get_header([th], "SourceX")[0]),
+                    np.float32(get_header([th], "SourceY")[0]),
+                    np.float32(get_header([th], depth_key)[0]),
+                )
 
             rec = records.get(src)
             if rec is None:
@@ -503,6 +513,7 @@ def segy_scan(
     rec_depth_key: str = "GroupWaterDepth",
     threads: Optional[int] = None,
     fs=None,
+    by_receiver: bool = False,
 ) -> SegyScan:
     """
     Scan one or more SEGY files and merge the results.
@@ -522,6 +533,9 @@ def segy_scan(
         Header name containing the source depth.
     rec_depth_key : str, optional
         Header field containing the receiver depth.
+    by_receiver : bool, optional
+        When ``True``, traces are grouped by receiver coordinates rather than
+        by source coordinates.
     fs : filesystem-like object, optional
         Filesystem providing ``open`` and ``glob`` if scanning non-local paths.
 
@@ -562,7 +576,14 @@ def segy_scan(
     with ThreadPoolExecutor(max_workers=threads) as pool:
         futures = {
             pool.submit(
-                _scan_file, f, keys, chunk, depth_key, rec_depth_key, fs
+                _scan_file,
+                f,
+                keys,
+                chunk,
+                depth_key,
+                rec_depth_key,
+                fs,
+                by_receiver,
             ): f
             for f in files
         }

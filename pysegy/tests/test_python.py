@@ -226,6 +226,46 @@ def test_scan_unsorted_traces(tmp_path):
     assert scan.summary(0)["GroupX"] == (1, 3)
 
 
+def test_scan_by_receiver_gather(tmp_path):
+    """Group traces by receiver location instead of source."""
+    fh = FileHeader()
+    fh.bfh.ns = 1
+    fh.bfh.DataSampleFormat = 5
+
+    h1 = BinaryTraceHeader()
+    h1.ns = 1
+    h1.SourceX = 1
+    h1.SourceY = 1
+    h1.GroupX = 5
+    h1.GroupY = 0
+
+    h2 = BinaryTraceHeader()
+    h2.ns = 1
+    h2.SourceX = 2
+    h2.SourceY = 2
+    h2.GroupX = 5
+    h2.GroupY = 0
+
+    h3 = BinaryTraceHeader()
+    h3.ns = 1
+    h3.SourceX = 3
+    h3.SourceY = 3
+    h3.GroupX = 10
+    h3.GroupY = 0
+
+    headers = [h1, h2, h3]
+    data = np.zeros((1, 3), dtype=np.float32)
+    block = SeisBlock(fh, headers, data)
+    tmp = tmp_path / "rec_gather.segy"
+    with open(tmp, "wb") as f:
+        seg.write.write_block(f, block)
+
+    scan = seg.segy_scan(str(tmp), by_receiver=True)
+    assert len(scan.shots) == 2
+    assert scan.counts == [2, 1]
+    assert scan.shots[0] == (5.0, 0.0, 0.0)
+
+
 def test_save_and_load_scan(tmp_path):
     scan = seg.segy_scan(DATAFILE)
     dest = tmp_path / "scan.pkl"
