@@ -18,7 +18,9 @@ jobs:
       - name: Build package
         run: |
           python -m pip install build
+          echo "prune data\nprune docs\nprune notebooks\nprune benchmarks" > MANIFEST.in
           python -m build
+
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
