@@ -25,12 +25,14 @@ from .types import (
 
 @dataclass
 class ShotRecord:
-    """Information about a single shot location within a SEGY file."""
+    """Information about a single shot or receiver gather within a SEGY file."""
 
     path: str
     coordinates: Tuple[float, float, float]
     fileheader: FileHeader
     rec_depth_key: str = "GroupWaterDepth"
+    depth_key: str = "SourceDepth"
+    by_receiver: bool = False
     segments: List[Tuple[int, int]] = field(default_factory=list)
     summary: dict = field(default_factory=dict)
     ns: int = 0
@@ -70,7 +72,7 @@ class ShotRecord:
             opener = self.fs.open if self.fs is not None else open
             with opener(self.path, "rb") as f:
                 f.seek(offset)
-                h, d = read_traces(
+                _, d = read_traces(
                     f,
                     self.fileheader.bfh.ns,
                     count,
@@ -78,7 +80,7 @@ class ShotRecord:
                     keys,
                 )
                 data_parts.append(d)
-        return np.concatenate(data_parts, axis=0) if data_parts else []
+        return np.concatenate(data_parts, axis=1) if data_parts else []
 
     def read_headers(
         self, keys: Optional[Iterable[str]] = None
@@ -104,20 +106,25 @@ class ShotRecord:
 
     @property
     def rec_coordinates(self) -> np.ndarray:
-        """Array of receiver coordinates for this shot."""
+        """Array of receiver coordinates for this gather."""
         if self._rec_coords is None:
+            if self.by_receiver:
+                xname, yname, zname = "SourceX", "SourceY", self.depth_key
+            else:
+                xname, yname, zname = "GroupX", "GroupY", self.rec_depth_key
+
             hdrs = self.read_headers(
                 keys=[
-                    "GroupX",
-                    "GroupY",
-                    self.rec_depth_key,
+                    xname,
+                    yname,
+                    zname,
                     "RecSourceScalar",
                     "ElevationScalar",
                 ]
             )
-            gx = get_header(hdrs, "GroupX")
-            gy = get_header(hdrs, "GroupY")
-            dz = get_header(hdrs, self.rec_depth_key)
+            gx = get_header(hdrs, xname)
+            gy = get_header(hdrs, yname)
+            dz = get_header(hdrs, zname)
             self._rec_coords = np.column_stack((gx, gy, dz)).astype(np.float32)
         return self._rec_coords
 
@@ -325,11 +332,10 @@ class SegyScan:
                     self.fileheader.bfh.DataSampleFormat,
                     keys,
                 )
-                headers.extend(h)
-                data_parts.append(d)
-        # Concatenate data parts if necessary
+            headers.extend(h)
+            data_parts.append(d)
         if data_parts:
-            data = np.concatenate(data_parts, axis=0)
+            data = np.concatenate(data_parts, axis=1)
         else:
             data = []  # pragma: no cover
         return SeisBlock(self.fileheader, headers, data)
@@ -384,6 +390,7 @@ def _scan_file(
     depth_key: str = "SourceDepth",
     rec_depth_key: str = "GroupWaterDepth",
     fs=None,
+    by_receiver: bool = False,
 ) -> SegyScan:
     """
     Scan ``path`` for shot locations.
@@ -400,6 +407,8 @@ def _scan_file(
         Trace header field giving the source depth.
     rec_depth_key : str, optional
         Header field giving the receiver depth.
+    by_receiver : bool, optional
+        Group traces by receiver coordinates instead of source coordinates.
 
     fs : filesystem-like object, optional
         Filesystem providing ``open`` if reading from non-local storage.
@@ -450,11 +459,18 @@ def _scan_file(
             trace_keys,
             chunk,
         ):
-            src = (
-                np.float32(get_header([th], "SourceX")[0]),
-                np.float32(get_header([th], "SourceY")[0]),
-                np.float32(get_header([th], depth_key)[0]),
-            )
+            if by_receiver:
+                src = (
+                    np.float32(get_header([th], "GroupX")[0]),
+                    np.float32(get_header([th], "GroupY")[0]),
+                    np.float32(get_header([th], rec_depth_key)[0]),
+                )
+            else:
+                src = (
+                    np.float32(get_header([th], "SourceX")[0]),
+                    np.float32(get_header([th], "SourceY")[0]),
+                    np.float32(get_header([th], depth_key)[0]),
+                )
 
             rec = records.get(src)
             if rec is None:
@@ -462,7 +478,9 @@ def _scan_file(
                     path,
                     src,
                     fh,
-                    rec_depth_key,
+                    depth_key if by_receiver else rec_depth_key,
+                    rec_depth_key if by_receiver else depth_key,
+                    by_receiver,
                     [],
                     {},
                     ns,
@@ -503,6 +521,7 @@ def segy_scan(
     rec_depth_key: str = "GroupWaterDepth",
     threads: Optional[int] = None,
     fs=None,
+    by_receiver: bool = False,
 ) -> SegyScan:
     """
     Scan one or more SEGY files and merge the results.
@@ -522,6 +541,9 @@ def segy_scan(
         Header name containing the source depth.
     rec_depth_key : str, optional
         Header field containing the receiver depth.
+    by_receiver : bool, optional
+        When ``True``, traces are grouped by receiver coordinates rather than
+        by source coordinates.
     fs : filesystem-like object, optional
         Filesystem providing ``open`` and ``glob`` if scanning non-local paths.
 
@@ -562,7 +584,14 @@ def segy_scan(
     with ThreadPoolExecutor(max_workers=threads) as pool:
         futures = {
             pool.submit(
-                _scan_file, f, keys, chunk, depth_key, rec_depth_key, fs
+                _scan_file,
+                f,
+                keys,
+                chunk,
+                depth_key,
+                rec_depth_key,
+                fs,
+                by_receiver,
             ): f
             for f in files
         }
