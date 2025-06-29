@@ -67,24 +67,20 @@ class ShotRecord:
 
     def read_data(self, keys: Optional[Iterable[str]] = None) -> SeisBlock:
         """Load all traces for this shot."""
-        total = sum(c for _, c in self.segments)
-        ns = self.fileheader.bfh.ns
-        data = np.empty((ns, total), dtype=np.float32)
-        start = 0
+        data_parts = []
         for offset, count in self.segments:
             opener = self.fs.open if self.fs is not None else open
             with opener(self.path, "rb") as f:
                 f.seek(offset)
                 _, d = read_traces(
                     f,
-                    ns,
+                    self.fileheader.bfh.ns,
                     count,
                     self.fileheader.bfh.DataSampleFormat,
                     keys,
                 )
-                data[:, start : start + count] = d
-            start += count
-        return data
+                data_parts.append(d)
+        return np.concatenate(data_parts, axis=1) if data_parts else []
 
     def read_headers(
         self, keys: Optional[Iterable[str]] = None
@@ -322,10 +318,7 @@ class SegyScan:
         """
         rec = self.records[idx]
         headers: List[BinaryTraceHeader] = []
-        total = sum(c for _, c in rec.segments)
-        ns = self.fileheader.bfh.ns
-        data = np.empty((ns, total), dtype=np.float32)
-        start = 0
+        data_parts = []
         for offset, count in rec.segments:
             opener = rec.fs.open if rec.fs is not None else (
                 self.fs.open if getattr(self, "fs", None) is not None else open
@@ -334,14 +327,17 @@ class SegyScan:
                 f.seek(offset)
                 h, d = read_traces(
                     f,
-                    ns,
+                    self.fileheader.bfh.ns,
                     count,
                     self.fileheader.bfh.DataSampleFormat,
                     keys,
                 )
             headers.extend(h)
-            data[:, start : start + count] = d
-            start += count
+            data_parts.append(d)
+        if data_parts:
+            data = np.concatenate(data_parts, axis=1)
+        else:
+            data = []  # pragma: no cover
         return SeisBlock(self.fileheader, headers, data)
 
     def read_headers(
