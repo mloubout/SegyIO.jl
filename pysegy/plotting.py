@@ -1,4 +1,5 @@
-"""Utility helpers for quick visualisation of seismic data.
+"""
+Utility helpers for quick visualisation of seismic data.
 
 The helpers mirror a subset of the `SlimPlotting.jl` API and can work
 directly with :class:`~pysegy.SeisBlock` or :class:`~pysegy.ShotRecord`

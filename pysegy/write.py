@@ -4,6 +4,8 @@ Writing utilities for the minimal Python SEGY implementation.
 
 import struct
 from typing import BinaryIO
+
+from .utils import pack_int, struct_fmt, write_samples, open_file
 from .types import (
     SeisBlock,
     FileHeader,
@@ -11,7 +13,6 @@ from .types import (
     FH_BYTE2SAMPLE,
     TH_BYTE2SAMPLE,
 )
-from .ibm import ieee_to_ibm
 
 
 def write_fileheader(
@@ -38,10 +39,7 @@ def write_fileheader(
     for key in FH_BYTE2SAMPLE:
         val = getattr(bfh, key)
         size = 4 if key in ("Job", "Line", "Reel") else 2
-        fmt = ">i" if size == 4 else ">h"
-        if not bigendian:
-            fmt = "<i" if size == 4 else "<h"
-        f.write(struct.pack(fmt, val))
+        f.write(pack_int(val, size, bigendian))
         size_written += size
     pad = 3600 - size_written
     if pad > 0:
@@ -64,13 +62,9 @@ def write_traceheader(
         Write numbers in big-endian order when ``True``.
     """
     buf = bytearray(240)
-    for key in TH_BYTE2SAMPLE:
+    for key, (offset, size) in TH_BYTE2SAMPLE.items():
         val = getattr(th, key)
-        offset, size = TH_BYTE2SAMPLE[key]
-        fmt = ">i" if size == 4 else ">h"
-        if not bigendian:
-            fmt = "<i" if size == 4 else "<h"
-        struct.pack_into(fmt, buf, offset, val)
+        struct.pack_into(struct_fmt(size, bigendian), buf, offset, val)
     f.write(buf)
 
 
@@ -88,17 +82,11 @@ def write_block(f: BinaryIO, block: SeisBlock, bigendian: bool = True) -> None:
         Write numbers in big-endian order when ``True``.
     """
     write_fileheader(f, block.fileheader, bigendian)
-    ns = block.fileheader.bfh.ns
     dsf = block.fileheader.bfh.DataSampleFormat
     for i, hdr in enumerate(block.traceheaders):
         trace = block.data[:, i]
         write_traceheader(f, hdr, bigendian)
-        if dsf == 1:
-            converted = b"".join(ieee_to_ibm(float(x)) for x in trace)
-            f.write(converted)
-        else:
-            fmt = ">%df" % ns if bigendian else "<%df" % ns
-            f.write(struct.pack(fmt, *trace))
+        write_samples(f, trace, dsf, bigendian)
 
 
 def segy_write(path: str, block: SeisBlock, fs=None) -> None:
@@ -115,8 +103,6 @@ def segy_write(path: str, block: SeisBlock, fs=None) -> None:
     """
     print(f"Writing SEGY file {path}")
 
-    opener = fs.open if fs is not None else open
-
-    with opener(path, "wb") as f:
+    with open_file(path, "wb", fs) as f:
         write_block(f, block)
     print(f"Finished writing {path}")
