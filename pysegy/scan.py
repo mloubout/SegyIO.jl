@@ -25,12 +25,14 @@ from .types import (
 
 @dataclass
 class ShotRecord:
-    """Information about a single shot location within a SEGY file."""
+    """Information about a single shot or receiver gather within a SEGY file."""
 
     path: str
     coordinates: Tuple[float, float, float]
     fileheader: FileHeader
     rec_depth_key: str = "GroupWaterDepth"
+    depth_key: str = "SourceDepth"
+    by_receiver: bool = False
     segments: List[Tuple[int, int]] = field(default_factory=list)
     summary: dict = field(default_factory=dict)
     ns: int = 0
@@ -65,20 +67,24 @@ class ShotRecord:
 
     def read_data(self, keys: Optional[Iterable[str]] = None) -> SeisBlock:
         """Load all traces for this shot."""
-        data_parts = []
+        total = sum(c for _, c in self.segments)
+        ns = self.fileheader.bfh.ns
+        data = np.empty((ns, total), dtype=np.float32)
+        start = 0
         for offset, count in self.segments:
             opener = self.fs.open if self.fs is not None else open
             with opener(self.path, "rb") as f:
                 f.seek(offset)
-                h, d = read_traces(
+                _, d = read_traces(
                     f,
-                    self.fileheader.bfh.ns,
+                    ns,
                     count,
                     self.fileheader.bfh.DataSampleFormat,
                     keys,
                 )
-                data_parts.append(d)
-        return np.concatenate(data_parts, axis=0) if data_parts else []
+                data[:, start : start + count] = d
+            start += count
+        return data
 
     def read_headers(
         self, keys: Optional[Iterable[str]] = None
@@ -104,20 +110,25 @@ class ShotRecord:
 
     @property
     def rec_coordinates(self) -> np.ndarray:
-        """Array of receiver coordinates for this shot."""
+        """Array of receiver coordinates for this gather."""
         if self._rec_coords is None:
+            if self.by_receiver:
+                xname, yname, zname = "SourceX", "SourceY", self.depth_key
+            else:
+                xname, yname, zname = "GroupX", "GroupY", self.rec_depth_key
+
             hdrs = self.read_headers(
                 keys=[
-                    "GroupX",
-                    "GroupY",
-                    self.rec_depth_key,
+                    xname,
+                    yname,
+                    zname,
                     "RecSourceScalar",
                     "ElevationScalar",
                 ]
             )
-            gx = get_header(hdrs, "GroupX")
-            gy = get_header(hdrs, "GroupY")
-            dz = get_header(hdrs, self.rec_depth_key)
+            gx = get_header(hdrs, xname)
+            gy = get_header(hdrs, yname)
+            dz = get_header(hdrs, zname)
             self._rec_coords = np.column_stack((gx, gy, dz)).astype(np.float32)
         return self._rec_coords
 
@@ -311,7 +322,10 @@ class SegyScan:
         """
         rec = self.records[idx]
         headers: List[BinaryTraceHeader] = []
-        data_parts = []
+        total = sum(c for _, c in rec.segments)
+        ns = self.fileheader.bfh.ns
+        data = np.empty((ns, total), dtype=np.float32)
+        start = 0
         for offset, count in rec.segments:
             opener = rec.fs.open if rec.fs is not None else (
                 self.fs.open if getattr(self, "fs", None) is not None else open
@@ -320,18 +334,14 @@ class SegyScan:
                 f.seek(offset)
                 h, d = read_traces(
                     f,
-                    self.fileheader.bfh.ns,
+                    ns,
                     count,
                     self.fileheader.bfh.DataSampleFormat,
                     keys,
                 )
-                headers.extend(h)
-                data_parts.append(d)
-        # Concatenate data parts if necessary
-        if data_parts:
-            data = np.concatenate(data_parts, axis=0)
-        else:
-            data = []  # pragma: no cover
+            headers.extend(h)
+            data[:, start : start + count] = d
+            start += count
         return SeisBlock(self.fileheader, headers, data)
 
     def read_headers(
@@ -473,6 +483,8 @@ def _scan_file(
                     src,
                     fh,
                     rec_depth_key,
+                    depth_key,
+                    by_receiver,
                     [],
                     {},
                     ns,

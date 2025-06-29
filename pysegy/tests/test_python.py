@@ -264,6 +264,9 @@ def test_scan_by_receiver_gather(tmp_path):
     assert len(scan.shots) == 2
     assert scan.counts == [2, 1]
     assert scan.shots[0] == (5.0, 0.0, 0.0)
+    coords = scan[0].rec_coordinates
+    assert coords.shape == (2, 3)
+    assert tuple(coords[0]) == (1.0, 1.0, 0.0)
 
 
 def test_save_and_load_scan(tmp_path):
