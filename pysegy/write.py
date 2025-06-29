@@ -13,7 +13,6 @@ from .types import (
     FH_BYTE2SAMPLE,
     TH_BYTE2SAMPLE,
 )
-from .ibm import ieee_to_ibm
 
 
 def write_fileheader(

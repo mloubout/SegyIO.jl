@@ -52,7 +52,7 @@ def read_fileheader(
         offset = FH_BYTE2SAMPLE[k]
         # All file header fields are integers of 2 or 4 bytes
         size = 4 if k in ("Job", "Line", "Reel") else 2
-        val_bytes = text_header[offset : offset + size]
+        val_bytes = text_header[offset:offset + size]
         val = unpack_int(val_bytes, size, bigendian)
         setattr(bfh, k, val)
     bfh.keys_loaded = list(keys)
@@ -87,7 +87,7 @@ def read_traceheader(
     th = BinaryTraceHeader()
     for k in keys:
         offset, size = TH_BYTE2SAMPLE[k]
-        val = unpack_int(hdr_bytes[offset : offset + size], size, bigendian)
+        val = unpack_int(hdr_bytes[offset:offset + size], size, bigendian)
         setattr(th, k, val)
     th.keys_loaded = list(keys)
     return th
@@ -141,14 +141,14 @@ def read_traces(
 
     def parse_one(idx: int):
         offset = idx * trace_size
-        hdr_buf = raw[offset : offset + 240]
+        hdr_buf = raw[offset:offset + 240]
         hdr = BinaryTraceHeader()
         for k, off_k, size_k in hdr_parsers:
-            val = unpack_int(hdr_buf[off_k : off_k + size_k], size_k, bigendian)
+            val = unpack_int(hdr_buf[off_k:off_k + size_k], size_k, bigendian)
             setattr(hdr, k, val)
         hdr.keys_loaded = key_list
 
-        data_buf = raw[offset + 240 : offset + trace_size]
+        data_buf = raw[offset + 240:offset + trace_size]
         samples = read_samples(data_buf, ns, datatype, bigendian)
         return idx, hdr, samples
 
