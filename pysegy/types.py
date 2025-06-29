@@ -195,13 +195,17 @@ class BinaryFileHeader:
     keys_loaded: List[str] = field(default_factory=lambda: list(FH_FIELDS))
 
     def __getattr__(self, name):
-        """Return the value for ``name`` from ``values``."""
+        """
+        Return the value for ``name`` from ``values``.
+        """
         if name in self.values:
             return self.values[name]
         raise AttributeError(name)
 
     def __setattr__(self, name, value):
-        """Set ``name`` in ``values`` when it is a header field."""
+        """
+        Set ``name`` in ``values`` when it is a header field.
+        """
         if name in {"values", "keys_loaded"} or name not in FH_FIELDS:
             super().__setattr__(name, value)
         else:
@@ -210,7 +214,9 @@ class BinaryFileHeader:
                 self.keys_loaded.append(name)
 
     def __str__(self):
-        """Return a multi-line representation of loaded fields."""
+        """
+        Return a multi-line representation of loaded fields.
+        """
         lines = ["BinaryFileHeader:"]
         fields = self.keys_loaded or FH_FIELDS
         for k in fields:
@@ -237,7 +243,9 @@ class FileHeader:
     bfh: BinaryFileHeader = field(default_factory=BinaryFileHeader)
 
     def __str__(self) -> str:
-        """Return a readable representation of the header."""
+        """
+        Return a readable representation of the header.
+        """
         return str(self.bfh)
 
     __repr__ = __str__
@@ -255,13 +263,17 @@ class BinaryTraceHeader:
     keys_loaded: List[str] = field(default_factory=list)
 
     def __getattr__(self, name):
-        """Return the header value ``name``."""
+        """
+        Return the header value ``name``.
+        """
         if name in self.values:
             return self.values[name]
         raise AttributeError(name)
 
     def __setattr__(self, name, value):
-        """Assign ``value`` to ``name`` when valid."""
+        """
+        Assign ``value`` to ``name`` when valid.
+        """
         if name in {"values", "keys_loaded"} or name not in TH_FIELDS:
             super().__setattr__(name, value)
         else:
@@ -280,7 +292,9 @@ class BinaryTraceHeader:
         super().__setattr__("keys_loaded", state["keys_loaded"])
 
     def __str__(self):
-        """Return a multi-line representation of loaded fields."""
+        """
+        Return a multi-line representation of loaded fields.
+        """
         lines = ["BinaryTraceHeader:"]
         fields = self.keys_loaded or TH_FIELDS
         for k in fields:

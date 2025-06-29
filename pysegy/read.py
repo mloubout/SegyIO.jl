@@ -14,8 +14,7 @@ from typing import BinaryIO, Iterable, List, Optional, Tuple
 import numpy as np
 from concurrent.futures import ThreadPoolExecutor
 
-from .ibm import ibm_to_ieee_array
-import struct
+from .utils import read_samples, unpack_int, open_file
 
 # Number of traces to read at a time when loading an entire file
 TRACE_CHUNKSIZE = 512
@@ -43,19 +42,18 @@ def read_fileheader(
     """
     if keys is None:
         keys = list(FH_BYTE2SAMPLE.keys())
+
     start = f.tell()
     f.seek(0)
     text_header = f.read(3600)
+
     bfh = BinaryFileHeader()
     for k in keys:
         offset = FH_BYTE2SAMPLE[k]
-        # all fields are 2 or 4 bytes integers
+        # All file header fields are integers of 2 or 4 bytes
         size = 4 if k in ("Job", "Line", "Reel") else 2
-        fmt = ">i" if size == 4 else ">h"
-        if not bigendian:
-            fmt = "<i" if size == 4 else "<h"  # pragma: no cover
-        val_bytes = text_header[offset:offset+size]
-        val = struct.unpack(fmt, val_bytes)[0]
+        val_bytes = text_header[offset : offset + size]
+        val = unpack_int(val_bytes, size, bigendian)
         setattr(bfh, k, val)
     bfh.keys_loaded = list(keys)
     f.seek(start)
@@ -84,14 +82,12 @@ def read_traceheader(
     """
     if keys is None:
         keys = list(TH_BYTE2SAMPLE.keys())
+
     hdr_bytes = f.read(240)
     th = BinaryTraceHeader()
     for k in keys:
         offset, size = TH_BYTE2SAMPLE[k]
-        fmt = ">i" if size == 4 else ">h"
-        if not bigendian:
-            fmt = "<i" if size == 4 else "<h"  # pragma: no cover
-        val = struct.unpack(fmt, hdr_bytes[offset:offset + size])[0]
+        val = unpack_int(hdr_bytes[offset : offset + size], size, bigendian)
         setattr(th, k, val)
     th.keys_loaded = list(keys)
     return th
@@ -130,9 +126,7 @@ def read_traces(
         :class:`BinaryTraceHeader` and ``data`` is ``ns`` x ``ntraces`` array.
     """
     data: np.ndarray = np.zeros((ns, ntraces), dtype=np.float32)
-    headers: List[BinaryTraceHeader] = [
-        BinaryTraceHeader() for _ in range(ntraces)
-    ]
+    headers: List[BinaryTraceHeader] = [BinaryTraceHeader() for _ in range(ntraces)]
 
     trace_size = 240 + ns * 4
     raw = f.read(trace_size * ntraces)
@@ -141,30 +135,21 @@ def read_traces(
         keys = list(TH_BYTE2SAMPLE.keys())
     key_list = list(keys)
 
-    # Pre-compute unpack formats for header fields
-    endian_char = ">" if bigendian else "<"
-    hdr_parsers = []
-    for k in key_list:
-        offset_k, size = TH_BYTE2SAMPLE[k]
-        fmt = endian_char + ("i" if size == 4 else "h")
-        hdr_parsers.append((k, offset_k, fmt))
-
-    ibm = datatype == 1
+    hdr_parsers = [
+        (k, TH_BYTE2SAMPLE[k][0], TH_BYTE2SAMPLE[k][1]) for k in key_list
+    ]
 
     def parse_one(idx: int):
         offset = idx * trace_size
-        hdr_buf = raw[offset:offset + 240]
+        hdr_buf = raw[offset : offset + 240]
         hdr = BinaryTraceHeader()
-        for k, offset_k, fmt in hdr_parsers:
-            val = struct.unpack_from(fmt, hdr_buf, offset_k)[0]
+        for k, off_k, size_k in hdr_parsers:
+            val = unpack_int(hdr_buf[off_k : off_k + size_k], size_k, bigendian)
             setattr(hdr, k, val)
         hdr.keys_loaded = key_list
 
-        data_buf = raw[offset + 240:offset + trace_size]
-        if ibm:
-            samples = ibm_to_ieee_array(data_buf, ns, bigendian)
-        else:
-            samples = np.frombuffer(data_buf, dtype=endian_char + "f4", count=ns)
+        data_buf = raw[offset + 240 : offset + trace_size]
+        samples = read_samples(data_buf, ns, datatype, bigendian)
         return idx, hdr, samples
 
     with ThreadPoolExecutor() as pool:
@@ -255,9 +240,7 @@ def segy_read(
     """
     print(f"Reading SEGY file {path}")
 
-    opener = fs.open if fs is not None else open
-
-    with opener(path, "rb") as f:
+    with open_file(path, "rb", fs) as f:
         block = read_file(f, keys=keys, workers=workers)
     print(
         f"Loaded header ns={block.fileheader.bfh.ns} "

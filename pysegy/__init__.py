@@ -1,4 +1,6 @@
-"""Minimal Python port of SegyIO.jl."""
+"""
+Minimal Python port of SegyIO.jl.
+"""
 from importlib.metadata import version, PackageNotFoundError
 
 from .types import (

@@ -43,12 +43,16 @@ def test_write_roundtrip(tmp_path):
 
 
 def test_ibm_conversion():
-    """Ensure IBM -> IEEE conversion works for known constant."""
+    """
+    Ensure IBM -> IEEE conversion works for known constant.
+    """
     assert ibm_to_ieee(b"\x41\x10\x00\x00") == 1.0
 
 
 def test_fileheader_io():
-    """Round-trip a file header using in-memory bytes."""
+    """
+    Round-trip a file header using in-memory bytes.
+    """
     fh = FileHeader()
     fh.bfh.Job = 99
     fh.bfh.Line = 123
@@ -62,7 +66,9 @@ def test_fileheader_io():
 
 
 def test_write_read_block_bytesio():
-    """Write and read a simple block using BytesIO."""
+    """
+    Write and read a simple block using BytesIO.
+    """
     fh = FileHeader()
     fh.bfh.ns = 2
     fh.bfh.DataSampleFormat = 5
@@ -107,7 +113,9 @@ BP_URL = (
 
 
 def test_bp_model_headers():
-    """Download a portion of the BP model data and verify header values."""
+    """
+    Download a portion of the BP model data and verify header values.
+    """
     response = urllib.request.urlopen(BP_URL)
     with gzip.GzipFile(fileobj=response) as gz:
         data = gz.read(40000)
@@ -189,7 +197,9 @@ def test_scan_with_filesystem():
 
 
 def test_scan_unsorted_traces(tmp_path):
-    """Ensure scanning handles files with interleaved shots."""
+    """
+    Ensure scanning handles files with interleaved shots.
+    """
     fh = FileHeader()
     fh.bfh.ns = 1
     fh.bfh.DataSampleFormat = 5
@@ -227,7 +237,9 @@ def test_scan_unsorted_traces(tmp_path):
 
 
 def test_scan_by_receiver_gather(tmp_path):
-    """Group traces by receiver location instead of source."""
+    """
+    Group traces by receiver location instead of source.
+    """
     fh = FileHeader()
     fh.bfh.ns = 1
     fh.bfh.DataSampleFormat = 5

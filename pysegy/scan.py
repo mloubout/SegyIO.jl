@@ -14,7 +14,7 @@ import numpy as np
 import cloudpickle
 
 from .read import read_fileheader, read_traceheader, read_traces
-from .utils import get_header
+from .utils import get_header, open_file
 from .types import (
     SeisBlock,
     FileHeader,
@@ -25,7 +25,9 @@ from .types import (
 
 @dataclass
 class ShotRecord:
-    """Information about a single shot or receiver gather within a SEGY file."""
+    """
+    Information about a single shot or receiver gather within a SEGY file.
+    """
 
     path: str
     coordinates: Tuple[float, float, float]
@@ -66,11 +68,12 @@ class ShotRecord:
     __repr__ = __str__
 
     def read_data(self, keys: Optional[Iterable[str]] = None) -> SeisBlock:
-        """Load all traces for this shot."""
+        """
+        Load all traces for this shot.
+        """
         data_parts = []
         for offset, count in self.segments:
-            opener = self.fs.open if self.fs is not None else open
-            with opener(self.path, "rb") as f:
+            with open_file(self.path, "rb", self.fs) as f:
                 f.seek(offset)
                 _, d = read_traces(
                     f,
@@ -85,12 +88,13 @@ class ShotRecord:
     def read_headers(
         self, keys: Optional[Iterable[str]] = None
     ) -> List[BinaryTraceHeader]:
-        """Read only the headers for this shot."""
+        """
+        Read only the headers for this shot.
+        """
         headers: List[BinaryTraceHeader] = []
         ns = self.fileheader.bfh.ns
         for offset, count in self.segments:
-            opener = self.fs.open if self.fs is not None else open
-            with opener(self.path, "rb") as f:
+            with open_file(self.path, "rb", self.fs) as f:
                 f.seek(offset)
                 for _ in range(count):
                     th = read_traceheader(f, keys)
@@ -106,7 +110,9 @@ class ShotRecord:
 
     @property
     def rec_coordinates(self) -> np.ndarray:
-        """Array of receiver coordinates for this gather."""
+        """
+        Array of receiver coordinates for this gather.
+        """
         if self._rec_coords is None:
             if self.by_receiver:
                 xname, yname, zname = "SourceX", "SourceY", self.depth_key
@@ -243,7 +249,8 @@ class SegyScan:
     """
 
     def __init__(self, fh: FileHeader, records: List[ShotRecord], fs=None) -> None:
-        """Create a new :class:`SegyScan` instance.
+        """
+        Create a new :class:`SegyScan` instance.
 
         Parameters
         ----------
@@ -260,42 +267,58 @@ class SegyScan:
         self._data: Optional[List[SeisBlock]] = None
 
     def __len__(self) -> int:
-        """Return the number of distinct shots."""
+        """
+        Return the number of distinct shots.
+        """
         return len(self.records)
 
     @property
     def paths(self) -> List[str]:
-        """List of file paths corresponding to each shot."""
+        """
+        List of file paths corresponding to each shot.
+        """
         return [r.path for r in self.records]
 
     @property
     def shots(self) -> List[Tuple[int, int, int]]:
-        """Source coordinates for each shot including depth."""
+        """
+        Source coordinates for each shot including depth.
+        """
         return [r.coordinates for r in self.records]
 
     @property
     def offsets(self) -> List[int]:
-        """First trace byte offset for every shot."""
+        """
+        First trace byte offset for every shot.
+        """
         return [r.segments[0][0] for r in self.records]
 
     @property
     def counts(self) -> List[int]:
-        """Total number of traces for each shot."""
+        """
+        Total number of traces for each shot.
+        """
         return [sum(c for _, c in r.segments) for r in self.records]
 
     def __getitem__(self, idx: int) -> ShotRecord:
-        """Return the ``idx``-th :class:`ShotRecord`."""
+        """
+        Return the ``idx``-th :class:`ShotRecord`.
+        """
         return self.records[idx]
 
     @property
     def data(self) -> List[SeisBlock]:
-        """Load data for all shots on first access."""
+        """
+        Load data for all shots on first access.
+        """
         if self._data is None:
             self._data = [self.read_data(i) for i in range(len(self.records))]
         return self._data
 
     def summary(self, idx: int) -> dict:
-        """Header summaries for the ``idx``-th shot."""
+        """
+        Header summaries for the ``idx``-th shot.
+        """
         return self.records[idx].summary
 
     def read_data(
@@ -320,10 +343,8 @@ class SegyScan:
         headers: List[BinaryTraceHeader] = []
         data_parts = []
         for offset, count in rec.segments:
-            opener = rec.fs.open if rec.fs is not None else (
-                self.fs.open if getattr(self, "fs", None) is not None else open
-            )
-            with opener(rec.path, "rb") as f:
+            fs_to_use = rec.fs if rec.fs is not None else getattr(self, "fs", None)
+            with open_file(rec.path, "rb", fs_to_use) as f:
                 f.seek(offset)
                 h, d = read_traces(
                     f,
@@ -362,10 +383,8 @@ class SegyScan:
         headers: List[BinaryTraceHeader] = []
         ns = self.fileheader.bfh.ns
         for offset, count in rec.segments:
-            opener = rec.fs.open if rec.fs is not None else (
-                self.fs.open if getattr(self, "fs", None) is not None else open
-            )
-            with opener(rec.path, "rb") as f:
+            fs_to_use = rec.fs if rec.fs is not None else getattr(self, "fs", None)
+            with open_file(rec.path, "rb", fs_to_use) as f:
                 f.seek(offset)
                 for _ in range(count):
                     th = read_traceheader(f, keys)
@@ -435,9 +454,7 @@ def _scan_file(
             if k not in trace_keys:
                 trace_keys.append(k)
 
-    opener = fs.open if fs is not None else open
-
-    with opener(path, "rb") as f:
+    with open_file(path, "rb", fs) as f:
         fh = read_fileheader(f)
         print(f"Header for {path}: ns={fh.bfh.ns} dt={fh.bfh.dt}")
         ns = fh.bfh.ns
@@ -610,7 +627,8 @@ def segy_scan(
 
 
 def save_scan(path: str, scan: SegyScan, fs=None) -> None:
-    """Serialize ``scan`` to ``path``.
+    """
+    Serialize ``scan`` to ``path``.
 
     Parameters
     ----------
@@ -623,14 +641,14 @@ def save_scan(path: str, scan: SegyScan, fs=None) -> None:
         Filesystem providing ``open`` when writing to non-local storage.
     """
     print(f"Saving SegyScan to {path}")
-    opener = fs.open if fs is not None else open
-    with opener(path, "wb") as f:
+    with open_file(path, "wb", fs) as f:
         cloudpickle.dump(scan, f, protocol=cloudpickle.DEFAULT_PROTOCOL)
     print(f"Finished saving {path}")
 
 
 def load_scan(path: str, fs=None) -> SegyScan:
-    """Load a :class:`SegyScan` previously saved with :func:`save_scan`.
+    """
+    Load a :class:`SegyScan` previously saved with :func:`save_scan`.
 
     Parameters
     ----------
@@ -646,8 +664,7 @@ def load_scan(path: str, fs=None) -> SegyScan:
         Deserialized scan object.
     """
     print(f"Loading SegyScan from {path}")
-    opener = fs.open if fs is not None else open
-    with opener(path, "rb") as f:
+    with open_file(path, "rb", fs) as f:
         scan = cloudpickle.load(f)
 
     # When loading from external storage the filesystem won't be part of the
