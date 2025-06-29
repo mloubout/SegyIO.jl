@@ -465,12 +465,14 @@ def _scan_file(
                     np.float32(get_header([th], "GroupY")[0]),
                     np.float32(get_header([th], rec_depth_key)[0]),
                 )
+                depth_key = depth_key
             else:
                 src = (
                     np.float32(get_header([th], "SourceX")[0]),
                     np.float32(get_header([th], "SourceY")[0]),
                     np.float32(get_header([th], depth_key)[0]),
                 )
+                depth_key = rec_depth_key
 
             rec = records.get(src)
             if rec is None:
