@@ -516,7 +516,8 @@ gtag('config', 'G-ERCRWL13YZ', { 'anonymize_ip': true});
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    rec_depth_key<span class="op">=</span><span class="st">'GroupWaterDepth'</span>,</span>
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    threads<span class="op">=</span><span class="va">None</span>,</span>
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    fs<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    by_receiver<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Scan one or more SEGY files and merge the results.</p>
 <section id="parameters" class="level2 doc-section doc-section-parameters">
 <h2 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h2>
@@ -573,6 +574,12 @@ gtag('config', 'G-ERCRWL13YZ', { 'anonymize_ip': true});
 <td><code>'GroupWaterDepth'</code></td>
 </tr>
 <tr class="odd">
+<td>by_receiver</td>
+<td>bool</td>
+<td>When <code>True</code>, traces are grouped by receiver coordinates rather than by source coordinates.</td>
+<td><code>False</code></td>
+</tr>
+<tr class="even">
 <td>fs</td>
 <td>filesystem-like object</td>
 <td>Filesystem providing <code>open</code> and <code>glob</code> if scanning non-local paths.</td>

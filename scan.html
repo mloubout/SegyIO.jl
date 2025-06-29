@@ -363,7 +363,7 @@ gtag('config', 'G-ERCRWL13YZ', { 'anonymize_ip': true});
 
 
 <p>Scanning allows inspecting large surveys without loading everything in memory.</p>
-<div id="492fe518" class="cell">
+<div id="0f368cc0" class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pysegy <span class="im">as</span> seg</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co"># scan all matching files in the repository data directory</span></span>
@@ -373,7 +373,7 @@ gtag('config', 'G-ERCRWL13YZ', { 'anonymize_ip': true});
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="bu">len</span>(scan.shots))  <span class="co"># number of shot records</span></span>
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(scan.counts[<span class="dv">0</span>])   <span class="co"># traces in the first shot</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>The <a href="reference/segy_scan.html#pysegy.segy_scan">pysegy.segy_scan</a> function summarises multiple files and returns a <a href="reference/SegyScan.html#pysegy.SegyScan">pysegy.SegyScan</a> that can lazily read data for each shot.</p>
+<p>The <a href="reference/segy_scan.html#pysegy.segy_scan">pysegy.segy_scan</a> function summarises multiple files and returns a <a href="reference/SegyScan.html#pysegy.SegyScan">pysegy.SegyScan</a> that can lazily read data for each shot. Use <code>by_receiver=True</code> to group traces by receiver coordinates instead of source coordinates.</p>
 
 
 
